@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Configuration("securityConfigCon")
 public class SecurityConfig {
@@ -19,7 +21,8 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/swagger-resources/**",
                     "/swagger-ui.html",
-                    "/webjars/**").permitAll() // Kayıt ve login herkese açık
+                    "/webjars/**"
+                    ).permitAll() // Kayıt ve login herkese açık
                 .anyRequest().authenticated() // Diğer tüm istekler için kimlik doğrulama gerekli
             );
         return http.build();
