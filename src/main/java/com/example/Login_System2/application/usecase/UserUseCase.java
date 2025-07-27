@@ -59,5 +59,43 @@ public class UserUseCase {
 
     }
 
+    public Optional<User> updateUser(int userId , User updateUser){
+
+        Optional<User> userOpt = userRepository.findById(userId);
+
+        if(userOpt.isEmpty())
+            return Optional.empty();
+        
+        User user = userOpt.get();
+
+        if(!user.getEmail().equals(updateUser.getEmail())){
+            if(userRepository.existsByEmail(updateUser.getEmail()))
+                return Optional.empty();
+
+            user.setEmail(updateUser.getEmail());
+        }
+
+        
+        user.setName(updateUser.getName());
+        user.setSurname(updateUser.getSurname());
+
+
+        if(updateUser.getRole() != null)
+            user.setRole(updateUser.getRole());
+
+        User savedUser = userRepository.save(user);
+
+        return Optional.of(savedUser);
+    }
+
+    public boolean deleteUser(int userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+        userRepository.delete(userOpt.get());
+        return true;
+    }
+
     
 }

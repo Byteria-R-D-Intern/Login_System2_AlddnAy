@@ -1,124 +1,109 @@
 package com.example.Login_System2.application.usecase;
 
-import com.example.Login_System2.domain.port.ProfileRepository;
-import com.example.Login_System2.domain.port.UserRepository;
-import com.example.Login_System2.domain.model.User;
+import com.example.Login_System2.domain.port.*;
 import com.example.Login_System2.domain.model.UserProfile;
-import com.example.Login_System2.api.dto.ProfileRequest;
-import com.example.Login_System2.api.dto.ProfileResponse;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
+import com.example.Login_System2.domain.model.Role;
+import com.example.Login_System2.application.service.JwtProvider;
 
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+ 
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@AllArgsConstructor
+@Data
 @Service
 public class ProfileUseCase {
-
+    
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
+    private final JwtProvider jwtProvider;
+    
+    private static final Logger log = LoggerFactory.getLogger(ProfileUseCase.class);
 
-    public ProfileUseCase(ProfileRepository profileRepository, UserRepository userRepository) {
-        this.profileRepository = profileRepository;
-        this.userRepository = userRepository;
+    public Optional<UserProfile> getProfile(int requestId, String requestRole, int targetId) {
+        if ("USER".equals(requestRole) && requestId != targetId) {
+            return Optional.empty();
+        }
+        if ("MANAGER".equals(requestRole)) {
+            Optional<UserProfile> profileOpt = profileRepository.findByUserId(targetId);
+            if (profileOpt.isPresent() && profileOpt.get().getUser().getRole() == Role.ADMIN) {
+                return Optional.empty();
+            }
+        }
+        // ADMIN için hiçbir kısıtlama yok!
+        return profileRepository.findByUserId(targetId);
     }
 
-    private ProfileResponse mapToResponse(UserProfile profile) {
-        ProfileResponse response = new ProfileResponse();
-        response.setId(profile.getId());
-        response.setAdres(profile.getAdres());
-        response.setTelefon(profile.getTelefon());
-        response.setBirthDate(profile.getBirthDate());
-        return response;
+    public Optional<UserProfile> updateProfile(int requestId, String requestRole, int targetId, UserProfile updatedProfile) {
+        if ("USER".equals(requestRole) && requestId != targetId) {
+            return Optional.empty();
+        }
+        if ("MANAGER".equals(requestRole)) {
+            Optional<UserProfile> profileOpt = profileRepository.findByUserId(targetId);
+            if (profileOpt.isPresent() && profileOpt.get().getUser().getRole() == Role.ADMIN) {
+                return Optional.empty();
+            }
+        }
+        // ADMIN için hiçbir kısıtlama yok!
+        Optional<UserProfile> profileOpt = profileRepository.findByUserId(targetId);
+        if (profileOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        UserProfile profile = profileOpt.get();
+        profile.setAdres(updatedProfile.getAdres());
+        profile.setTelefon(updatedProfile.getTelefon());
+        profile.setBirthDate(updatedProfile.getBirthDate());
+        profileRepository.save(profile);
+        return Optional.of(profile);
+    }
+    
+    public boolean deleteProfile(int requesterId, String requesterRole, int targetUserId) {
+        if (!requesterRole.equals("ADMIN")) {
+            return false; // Sadece admin silebilir
+        }
+        Optional<UserProfile> profileOpt = profileRepository.findByUserId(targetUserId);
+        if (profileOpt.isEmpty()) {
+            return false;
+        }
+
+         profileRepository.delete(profileOpt.get()); // Eğer silme desteği varsa
+        return true;
     }
 
-    public ProfileResponse createProfile(ProfileRequest request, int currentUserId, String currentUserRole) {
-        if(currentUserRole.equals("ROLE_USER")){
-            // Kullanıcı sadece kendi profili için işlem yapabilir
-            // userId artık request'ten gelmiyor, doğrudan currentUserId kullanılacak
-        }
-        else if(!currentUserRole.equals("ROLE_ADMIN")){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bu işlemi yapmaya yetkiniz yok.");
-        }
+    public Optional<UserProfile> createProfile(int requesterId, String requesterRole, int targetUserId, UserProfile newProfile) {
+        log.info("Profil oluşturma isteği: requesterId={}, requesterRole={}, targetUserId={}", requesterId, requesterRole, targetUserId);
 
-        User user = userRepository.findById(currentUserId)
-        .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı."));
-
-        UserProfile userProfile = new UserProfile();
-        userProfile.setUser(user);
-        userProfile.setAdres(request.getAdres());
-        userProfile.setTelefon(request.getTelefon());
-        userProfile.setBirthDate(request.getBirthDate());
+        if ("MANAGER".equals(requesterRole)) {
+            log.warn("MANAGER profil oluşturamaz!");
+            return Optional.empty();
+        }
         
-        UserProfile savedProfile = profileRepository.save(userProfile);
-        return mapToResponse(savedProfile);
+        if ("USER".equals(requesterRole) && requesterId != targetUserId) {
+            log.warn("USER sadece kendi profili için oluşturabilir! requesterId={}, targetUserId={}", requesterId, targetUserId);
+            return Optional.empty();
+        }
         
-    }
-
-    public ProfileResponse getProfileById(int id, int currentUserId, String currentUserRole) {
-        UserProfile profile = profileRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil bulunamadı."));
-        if (currentUserRole.equals("ROLE_USER") && profile.getUser().getId() != currentUserId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Kendi dışınızda profil görüntüleyemezsiniz.");
+        if (profileRepository.findByUserId(targetUserId).isPresent()) {
+            log.warn("Profil zaten var! targetUserId={}", targetUserId);
+            return Optional.empty(); // Zaten profil var
         }
-        return mapToResponse(profile);
-    }
-
-    public ProfileResponse updateProfile(int id, ProfileRequest request, int currentUserId, String currentUserRole) {
-        UserProfile profile = profileRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil bulunamadı."));
-        if (currentUserRole.equals("ROLE_USER") && profile.getUser().getId() != currentUserId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Kendi dışınızda profil güncelleyemezsiniz.");
+        
+        if (userRepository.findById(targetUserId).isEmpty()) {
+            log.warn("Kullanıcı bulunamadı! targetUserId={}", targetUserId);
+            return Optional.empty(); // Kullanıcı yok
         }
-        profile.setAdres(request.getAdres());
-        profile.setTelefon(request.getTelefon());
-        profile.setBirthDate(request.getBirthDate());
-        UserProfile updated = profileRepository.save(profile);
-        return mapToResponse(updated);
-    }
-
-    public void deleteProfile(int id, int currentUserId, String currentUserRole) {
-        UserProfile profile = profileRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil bulunamadı."));
-        if (currentUserRole.equals("ROLE_USER") && profile.getUser().getId() != currentUserId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Kendi dışınızda profil silemezsiniz.");
-        }
-    }
-
-    public ProfileResponse getProfileByUserId(int userId, int currentUserId, String currentUserRole) {
-        UserProfile profile = profileRepository.findByUserId(userId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil bulunamadı."));
-        if (currentUserRole.equals("ROLE_USER") && userId != currentUserId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Kendi dışınızda profil görüntüleyemezsiniz.");
-        }
-        return mapToResponse(profile);
-    }
-
-    public ProfileResponse updateProfileByUserId(int userId, ProfileRequest request, int currentUserId, String currentUserRole) {
-        UserProfile profile = profileRepository.findByUserId(userId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil bulunamadı."));
-        if (currentUserRole.equals("ROLE_USER") && userId != currentUserId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Kendi dışınızda profil güncelleyemezsiniz.");
-        }
-        profile.setAdres(request.getAdres());
-        profile.setTelefon(request.getTelefon());
-        profile.setBirthDate(request.getBirthDate());
-        UserProfile updated = profileRepository.save(profile);
-        return mapToResponse(updated);
-    }
-
-    public void deleteProfileByUserId(int userId, int currentUserId, String currentUserRole) {
-        UserProfile profile = profileRepository.findByUserId(userId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil bulunamadı."));
-        if (currentUserRole.equals("ROLE_USER") && userId != currentUserId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Kendi dışınızda profil silemezsiniz.");
-        }
-        profileRepository.deleteById(profile.getId());
-    }
-
-    public java.util.List<ProfileResponse> getAllProfiles(String currentUserRole) {
-        if (!currentUserRole.equals("ROLE_ADMIN")) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tüm profilleri sadece admin görebilir.");
-        }
-        java.util.List<UserProfile> profiles = profileRepository.findAll();
-        return profiles.stream().map(this::mapToResponse).toList();
+        
+        // Profil oluştur
+        log.info("Profil oluşturuluyor... targetUserId={}", targetUserId);
+        newProfile.setUser(userRepository.findById(targetUserId).get());
+        UserProfile savedProfile = profileRepository.save(newProfile);
+        log.info("Profil başarıyla oluşturuldu! profileId={}", savedProfile.getId());
+        return Optional.of(savedProfile);
     }
 }

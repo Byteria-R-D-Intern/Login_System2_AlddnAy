@@ -2,8 +2,10 @@ package com.example.Login_System2.api.controller;
 
 import com.example.Login_System2.api.dto.*;
 import com.example.Login_System2.application.usecase.UserUseCase;
+import com.example.Login_System2.domain.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.Login_System2.infrastructure.Service.Jwtutil;
 import java.util.Map;
 
 @RestController
@@ -11,8 +13,10 @@ import java.util.Map;
 public class AuthController {
 
     private final UserUseCase userUseCase;
-    public AuthController(UserUseCase userUseCase) {
+    private final Jwtutil jwtUtil;
+    public AuthController(UserUseCase userUseCase,Jwtutil jwtUtil) {
         this.userUseCase = userUseCase;
+        this.jwtUtil = jwtUtil;
     }
 
 
@@ -36,5 +40,42 @@ public class AuthController {
         return userUseCase.login(email, password)
             .map(token -> ResponseEntity.ok(Map.of("token", token, "message", "Login successful")))
             .orElseGet(() -> ResponseEntity.badRequest().body(Map.of("message", "Invalid credentials")));
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> deleteUser(
+        @PathVariable int id,
+        @RequestBody User updateUser,
+        @RequestHeader("Authorization") String autheHeader){
+
+        String token = autheHeader.substring(7);
+        String role = jwtUtil.extractUserRole(token);
+
+        if (!"ADMIN".equals(role))
+            return ResponseEntity.status(403).body("Yetkisiz erişim !!!");
+
+        return userUseCase.updateUser(id , updateUser)
+            .map(user -> ResponseEntity.ok(user))
+            .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<?> deleteUser(
+        @PathVariable int id,
+        @RequestHeader("Authorization") String authHeader){
+
+        String token = authHeader.substring(7);
+        String role = jwtUtil.extractUserRole(token);
+
+        if (!"ADMIN".equals(role))
+            return ResponseEntity.status(403).body("Yetkisiz erişim !!!");
+
+        boolean deleted = userUseCase.deleteUser(id);
+
+        if(deleted)
+            return ResponseEntity.ok("Kullanıcı silindi.");
+        else
+            return ResponseEntity.notFound().build();
+
     }
 }
