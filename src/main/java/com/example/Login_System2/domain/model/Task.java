@@ -16,14 +16,13 @@ public class Task{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
-    private int ownerId;
+    private User owner;
 
     @Column(nullable = false)
     private String title;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private String description;
 
@@ -31,6 +30,7 @@ public class Task{
     @Column(nullable = false)
     private Status status;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Priority priority;
 

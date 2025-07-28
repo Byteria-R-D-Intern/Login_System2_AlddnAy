@@ -15,7 +15,7 @@ import lombok.Data;
 
 
 @RestController
-@RequestMapping("/user/profile")
+@RequestMapping("/api/user/profile")
 @Data
 @AllArgsConstructor
 public class ProfileController {

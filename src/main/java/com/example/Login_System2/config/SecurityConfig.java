@@ -20,7 +20,8 @@ public class SecurityConfig {
                     "/swagger-resources/**",
                     "/swagger-ui.html",
                     "/webjars/**",
-                    "/user/profile/**").permitAll() // Kayıt ve login herkese açık
+                    "/user/profile/**",
+                    "/api/tasks/**").permitAll() // Kayıt ve login herkese açık
                 .anyRequest().authenticated() // Diğer tüm istekler için kimlik doğrulama gerekli
             );
         return http.build();

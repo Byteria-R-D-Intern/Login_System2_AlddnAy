@@ -1,6 +1,7 @@
 package com.example.Login_System2.api.controller;
 
-import com.example.Login_System2.api.dto.*;
+import com.example.Login_System2.api.dto.AuthDto.LoginRequest;
+import com.example.Login_System2.api.dto.AuthDto.RegisterRequest;
 import com.example.Login_System2.application.usecase.UserUseCase;
 import com.example.Login_System2.domain.model.*;
 import org.springframework.http.ResponseEntity;
