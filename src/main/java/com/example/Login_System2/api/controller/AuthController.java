@@ -7,10 +7,15 @@ import com.example.Login_System2.domain.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.Login_System2.infrastructure.Service.Jwtutil;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Kullanıcı kimlik doğrulama ve yönetimi için API endpoint'leri")
 public class AuthController {
 
     private final UserUseCase userUseCase;
@@ -23,6 +28,10 @@ public class AuthController {
 
 
     @PostMapping("/register")
+    @Operation(
+        summary = "Kullanıcı kaydı",
+        description = "Yeni kullanıcı kaydı oluşturur ve JWT token döner"
+    )
     public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest request ){
         String email = request.getEmail();
         String password = request.getPassword();
@@ -35,6 +44,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(
+        summary = "Kullanıcı girişi",
+        description = "E-posta ve şifre ile kullanıcı girişi yapar ve JWT token döner"
+    )
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
         String email = request.getEmail();
         String password = request.getPassword();
@@ -44,6 +57,10 @@ public class AuthController {
     }
 
     @PutMapping("/users/{id}")
+    @Operation(
+        summary = "Kullanıcı güncelleme",
+        description = "Kullanıcı bilgilerini günceller. Sadece ADMIN yetkisi gerekir."
+    )
     public ResponseEntity<?> deleteUser(
         @PathVariable int id,
         @RequestBody User updateUser,
@@ -61,6 +78,10 @@ public class AuthController {
     }
 
     @DeleteMapping("/users/{id}")
+    @Operation(
+        summary = "Kullanıcı silme",
+        description = "Kullanıcıyı kalıcı olarak siler. Sadece ADMIN yetkisi gerekir."
+    )
     public ResponseEntity<?> deleteUser(
         @PathVariable int id,
         @RequestHeader("Authorization") String authHeader){

@@ -6,6 +6,11 @@ import java.util.Optional;
 import com.example.Login_System2.application.usecase.ProfileUseCase;
 import com.example.Login_System2.domain.model.UserProfile;
 import com.example.Login_System2.infrastructure.Service.Jwtutil;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.example.Login_System2.api.dto.*;
 
 import jakarta.validation.Valid;
@@ -18,6 +23,7 @@ import lombok.Data;
 @RequestMapping("/api/user/profile")
 @Data
 @AllArgsConstructor
+@Tag(name = "User Profile Management", description = "Kullanıcı profil yönetimi için API endpoint'leri")
 public class ProfileController {
 
     private final ProfileUseCase profileUseCase;
@@ -26,6 +32,10 @@ public class ProfileController {
 
     // CREATE
     @PostMapping("/{userId}")
+    @Operation(
+        summary = "Profil oluşturma",
+        description = "Kullanıcı için yeni profil oluşturur. USER sadece kendi profili için oluşturabilir."
+    )
     public ResponseEntity<?> createProfile(
             @PathVariable int userId,
             @RequestBody @Valid UserProfileRequest request,
@@ -52,7 +62,12 @@ public class ProfileController {
 
     // READ
     @GetMapping("/{userId}")
+    @Operation(
+        summary = "Profil görüntüleme",
+        description = "Kullanıcı profilini getirir. USER sadece kendi profilini görebilir."
+    )
     public ResponseEntity<?> getProfile(
+            @Parameter(description = "Kullanıcı ID'si", example = "1")
             @PathVariable int userId,
             @RequestHeader("Authorization") String authHeader) {
 
@@ -72,7 +87,12 @@ public class ProfileController {
 
     // UPDATE
     @PutMapping("/{userId}")
+    @Operation(
+        summary = "Profil güncelleme",
+        description = "Kullanıcı profilini günceller. USER sadece kendi profilini güncelleyebilir."
+    )
     public ResponseEntity<?> updateProfile(
+            @Parameter(description = "Kullanıcı ID'si", example = "1")
             @PathVariable int userId,
             @RequestBody @Valid UserProfileRequest request,
             @RequestHeader("Authorization") String authHeader) {
@@ -98,7 +118,12 @@ public class ProfileController {
 
     // DELETE
     @DeleteMapping("/{userId}")
+    @Operation(
+        summary = "Profil silme",
+        description = "Kullanıcı profilini kalıcı olarak siler. Sadece ADMIN yetkisi gerekir."
+    )
     public ResponseEntity<?> deleteProfile(
+            @Parameter(description = "Kullanıcı ID'si", example = "1")
             @PathVariable int userId,
             @RequestHeader("Authorization") String authHeader) {
 

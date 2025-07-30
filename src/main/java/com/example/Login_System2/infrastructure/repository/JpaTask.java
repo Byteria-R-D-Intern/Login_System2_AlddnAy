@@ -8,7 +8,7 @@ import com.example.Login_System2.domain.model.Priority;
 import com.example.Login_System2.domain.model.Task;
 import com.example.Login_System2.domain.port.TaskRepository;
 
-import ch.qos.logback.core.status.Status;
+import com.example.Login_System2.domain.model.Status;
 
 
 

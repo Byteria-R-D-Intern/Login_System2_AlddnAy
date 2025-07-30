@@ -1,10 +1,13 @@
 package com.example.Login_System2.application.usecase;
 
+import com.example.Login_System2.domain.model.Priority;
+import com.example.Login_System2.domain.model.Status;
 import com.example.Login_System2.domain.model.Task;
 import com.example.Login_System2.domain.port.TaskRepository;
 import com.example.Login_System2.domain.port.UserRepository;
 
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import lombok.AllArgsConstructor;
@@ -77,12 +80,7 @@ public class TaskUseCase {
             return Optional.empty();
         }
         
-        // MANAGER admin görevlerini güncelleyemez
-        if ("MANAGER".equals(requestRole)) {
-            // Admin kontrolü (eğer gerekirse)
-        }
         
-        // Güncelleme
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
         existingTask.setStatus(updatedTask.getStatus());
@@ -111,13 +109,29 @@ public class TaskUseCase {
             return false;
         }
         
-        // MANAGER admin görevlerini silemez
-        if ("MANAGER".equals(requesterRole)) {
-            // Admin kontrolü (eğer gerekirse)
-        }
-        
         taskRepository.delete(task);
         log.info("Görev başarıyla silindi! taskId={}", taskId);
         return true;
+    }
+
+    public List<Task> getAllTasks(int requestId, String requestRole, Integer ownerId, Status status, Priority priority){
+        log.info("Tüm görevleri getirme isteği: requesterId={}, requesterRole={}, ownerId={}, status={}, priority={}", requestId, requestRole, ownerId, status, priority);
+
+        if(requestRole.equals("USER"))
+            return taskRepository.findByOwnerId(requestId);
+
+        List<Task> tasks = new ArrayList<>();
+
+        if(ownerId != null)
+            tasks = taskRepository.findByOwnerId(ownerId);
+        else if(status != null)
+            tasks = taskRepository.findByStatus(status);
+        else if(priority != null)
+            tasks = taskRepository.findByPriority(priority);
+        else
+            tasks = taskRepository.findAll();
+
+        return tasks;
+
     }
 }

@@ -6,13 +6,14 @@ import java.util.Optional;
 import com.example.Login_System2.domain.model.Priority;
 import com.example.Login_System2.domain.model.Task;
 
-import ch.qos.logback.core.status.Status;
+import com.example.Login_System2.domain.model.Status;
 
 
 
 public interface TaskRepository {
     Task save(Task task);
     Optional<Task> findById(int id);
+    List<Task> findAll();
     List<Task> findByOwnerId(int ownerId);
     List<Task> findByStatus(Status status);
     List<Task> findByPriority(Priority priority);

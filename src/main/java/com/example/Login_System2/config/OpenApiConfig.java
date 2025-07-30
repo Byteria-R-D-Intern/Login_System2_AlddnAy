@@ -13,7 +13,10 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";
         return new OpenAPI()
-            .info(new Info().title("Login System API").version("1.0"))
+            .info(new Info()
+                .title("Login System API")
+                .description("JWT tabanlı kullanıcı yönetim sistemi API'si")
+                .version("1.0"))
             .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
             .components(
                 new io.swagger.v3.oas.models.Components()
