@@ -16,6 +16,4 @@ public class TaskResponse {
     private Status status;
     private Priority priority;
     private int ownerId;
-
-
 }

@@ -114,6 +114,7 @@ public class TaskController {
         }
     }
 
+
     @GetMapping("/tasks")
     @Operation(
         summary = "Tüm görevleri listele",
@@ -126,7 +127,9 @@ public class TaskController {
         @Parameter(description = "Görev önceliği (LOW, MEDIUM, HIGH)", example = "HIGH")
         @RequestParam(required = false) String priority,
         @Parameter(description = "Sahip kullanıcı ID'si", example = "1")
-        @RequestParam(required = false) Integer ownerId) {
+        @RequestParam(required = false) Integer ownerId,
+        @Parameter(description = "Görev başlığında arama yapılacak metin", example = "rapor")
+        @RequestParam(required = false) String title) {
 
         // Debug için log
         System.out.println("=== GET ALL TASKS ===");
@@ -167,7 +170,7 @@ public class TaskController {
             }
         }
 
-        List<Task> tasks = taskUseCase.getAllTasks(userId, role, ownerId, statusEnum, priorityEnum);
+        List<Task> tasks = taskUseCase.getAllTasks(userId, role, ownerId, statusEnum, priorityEnum, title);
         
         List<TaskResponse> responses = tasks.stream()
             .map(this::toResponseDTO)

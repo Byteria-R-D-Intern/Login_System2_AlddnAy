@@ -2,6 +2,8 @@ package com.example.Login_System2.infrastructure.Service;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Component;
 
 import com.example.Login_System2.application.service.JwtProvider;
@@ -14,7 +16,8 @@ import java.security.Key;
 @Component
 public class Jwtutil implements JwtProvider {
 
-    private final String SECRET_KEY = "my-super-secret-key-which-should-be-long-enough";
+    @Value("${JWT_SECRET_KEY}")
+    private  String SECRET_KEY;
     private final long EXPIRATION_TIME = 1000 * 60 * 15 ;
 
     private Key getSigningKey() {

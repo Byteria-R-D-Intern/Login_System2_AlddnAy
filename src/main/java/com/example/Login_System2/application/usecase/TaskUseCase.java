@@ -6,9 +6,9 @@ import com.example.Login_System2.domain.model.Task;
 import com.example.Login_System2.domain.port.TaskRepository;
 import com.example.Login_System2.domain.port.UserRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -39,7 +39,6 @@ public class TaskUseCase {
         Task savedTask = taskRepository.save(newTask);
         log.info("Görev başarıyla oluşturuldu! taskId={}", savedTask.getId());
         return Optional.of(savedTask);
-
     }
 
     public Optional<Task> getTask(int requestId, String requestRole, int taskId){
@@ -60,7 +59,6 @@ public class TaskUseCase {
 
         log.info("Görev başarıyla getirildi! taskId={}", taskId);
         return Optional.of(task);
-
     }
 
     public Optional<Task> updateTask(int requestId, String requestRole, int taskId, Task updatedTask) {
@@ -80,13 +78,11 @@ public class TaskUseCase {
             return Optional.empty();
         }
         
-        
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
         existingTask.setStatus(updatedTask.getStatus());
         existingTask.setPriority(updatedTask.getPriority());
 
-        
         Task savedTask = taskRepository.save(existingTask);
         log.info("Görev başarıyla güncellendi! taskId={}", taskId);
         return Optional.of(savedTask);
@@ -114,24 +110,31 @@ public class TaskUseCase {
         return true;
     }
 
-    public List<Task> getAllTasks(int requestId, String requestRole, Integer ownerId, Status status, Priority priority){
-        log.info("Tüm görevleri getirme isteği: requesterId={}, requesterRole={}, ownerId={}, status={}, priority={}", requestId, requestRole, ownerId, status, priority);
+    public List<Task> getAllTasks(int requestId, String requestRole, Integer ownerId, Status status, Priority priority, String title) {
+        log.info("Tüm görevleri getirme isteği: requesterId={}, requesterRole={}, ownerId={}, status={}, priority={}, title={}", 
+                 requestId, requestRole, ownerId, status, priority, title);
 
-        if(requestRole.equals("USER"))
-            return taskRepository.findByOwnerId(requestId);
+        // USER sadece kendi görevlerini görebilir
+        if (requestRole.equals("USER")) {
+            List<Task> userTasks = taskRepository.findByOwnerId(requestId);
+            
+            return userTasks.stream()
+                .filter(task -> status == null || task.getStatus() == status)
+                .filter(task -> priority == null || task.getPriority() == priority)
+                .filter(task -> title == null || title.isEmpty() || 
+                              task.getTitle().toLowerCase().contains(title.toLowerCase()))
+                .collect(Collectors.toList());
+        }
 
-        List<Task> tasks = new ArrayList<>();
-
-        if(ownerId != null)
-            tasks = taskRepository.findByOwnerId(ownerId);
-        else if(status != null)
-            tasks = taskRepository.findByStatus(status);
-        else if(priority != null)
-            tasks = taskRepository.findByPriority(priority);
-        else
-            tasks = taskRepository.findAll();
-
-        return tasks;
-
+        // MANAGER ve ADMIN için tüm görevler + filtreleme
+        List<Task> allTasks = taskRepository.findAll();
+        
+        return allTasks.stream()
+            .filter(task -> ownerId == null || task.getOwner().getId() == ownerId)
+            .filter(task -> status == null || task.getStatus() == status)
+            .filter(task -> priority == null || task.getPriority() == priority)
+            .filter(task -> title == null || title.isEmpty() || 
+                          task.getTitle().toLowerCase().contains(title.toLowerCase()))
+            .collect(Collectors.toList());
     }
 }

@@ -1,5 +1,7 @@
 package com.example.Login_System2.domain.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -26,6 +28,16 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    // Assignment ilişkileri
+    @OneToMany(mappedBy = "assignedBy", cascade = CascadeType.ALL)
+    private List<TaskAssignment> assignmentsGiven = new ArrayList<>();
+
+    @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.ALL)
+    private List<TaskAssignment> assignmentsReceived = new ArrayList<>();
+
+    @OneToMany(mappedBy = "currentAssignee", cascade = CascadeType.ALL)
+    private List<Task> currentlyAssignedTasks = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {

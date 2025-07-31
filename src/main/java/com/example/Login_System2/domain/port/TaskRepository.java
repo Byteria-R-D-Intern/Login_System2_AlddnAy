@@ -2,13 +2,9 @@ package com.example.Login_System2.domain.port;
 
 import java.util.List;
 import java.util.Optional;
-
 import com.example.Login_System2.domain.model.Priority;
 import com.example.Login_System2.domain.model.Task;
-
 import com.example.Login_System2.domain.model.Status;
-
-
 
 public interface TaskRepository {
     Task save(Task task);
