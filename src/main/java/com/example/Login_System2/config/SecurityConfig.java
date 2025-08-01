@@ -31,7 +31,8 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/swagger-resources/**",
                     "/swagger-ui.html",
-                    "/webjars/**"
+                    "/webjars/**",
+                    "/api/task-assignments"
                 ).permitAll()
                 .requestMatchers("/api/tasks/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                 .requestMatchers("/api/user/profile/**").hasAnyRole("USER", "MANAGER", "ADMIN")
