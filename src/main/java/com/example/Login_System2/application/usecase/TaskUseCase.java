@@ -3,9 +3,13 @@ package com.example.Login_System2.application.usecase;
 import com.example.Login_System2.domain.model.Priority;
 import com.example.Login_System2.domain.model.Status;
 import com.example.Login_System2.domain.model.Task;
+import com.example.Login_System2.domain.model.TaskAssignment;
 import com.example.Login_System2.domain.port.TaskRepository;
+import com.example.Login_System2.domain.port.TaskAssignmentRepository;
 import com.example.Login_System2.domain.port.UserRepository;
 
+import com.example.Login_System2.domain.model.AssignmentStatus;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,28 +23,46 @@ import org.slf4j.LoggerFactory;
 public class TaskUseCase {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final TaskAssignmentRepository taskAssignmentRepository;
 
     private final Logger log = LoggerFactory.getLogger(TaskUseCase.class);
 
     public Optional<Task> createTask(int requestId, String requestRole, Task newTask){
         log.info("Görev oluşturma isteği: requesterId={}, requesterRole={}", requestId, requestRole);
-
+        log.info("Task owner ID: {}", newTask.getOwner().getId());
+    
         if(requestRole.equals("USER") && requestId != newTask.getOwner().getId()){
             log.warn("USER sadece kendi görevlerini oluşturabilir! requesterId={}, ownerId={}", requestId, newTask.getOwner().getId());
             return Optional.empty();
         }
-
+    
         if (userRepository.findById(newTask.getOwner().getId()).isEmpty()) {
             log.warn("Kullanıcı bulunamadı! ownerId={}", newTask.getOwner().getId());
             return Optional.empty();
         }
-
+    
+        // Önce task'i kaydet
         log.info("Görev oluşturuluyor... ownerId={}", newTask.getOwner().getId());
         Task savedTask = taskRepository.save(newTask);
+        
+        // Task kaydedildikten sonra otomatik atama yap
+        TaskAssignment autoAssignment = new TaskAssignment();
+        autoAssignment.setTask(savedTask);
+        autoAssignment.setAssignedTo(savedTask.getOwner()); // Kendisine atama
+        autoAssignment.setAssignedBy(savedTask.getOwner()); // Kendisi atayan
+        autoAssignment.setStatus(AssignmentStatus.ACCEPTED); // Otomatik kabul
+        autoAssignment.setAssignedAt(LocalDateTime.now());
+        autoAssignment.setMessage("Görev sahibi tarafından otomatik atandı");
+    
+        taskAssignmentRepository.save(autoAssignment);
+    
+        // currentAssignee'yi de güncelle
+        savedTask.setCurrentAssignee(savedTask.getOwner());
+        taskRepository.save(savedTask);
+        
         log.info("Görev başarıyla oluşturuldu! taskId={}", savedTask.getId());
         return Optional.of(savedTask);
     }
-
     public Optional<Task> getTask(int requestId, String requestRole, int taskId){
         log.info("Görev görüntüleme isteği: requesterId={}, requesterRole={}, taskId={}", requestId, requestRole, taskId);
         Optional<Task> taskOpt = taskRepository.findById(taskId);

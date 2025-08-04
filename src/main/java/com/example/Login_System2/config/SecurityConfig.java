@@ -36,6 +36,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers("/api/tasks/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                 .requestMatchers("/api/user/profile/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                .requestMatchers("/api/task-comments/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                 .requestMatchers("/api/auth/users/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

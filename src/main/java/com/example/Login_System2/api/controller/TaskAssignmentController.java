@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.example.Login_System2.application.usecase.TaskAssignmentUseCase;
 import com.example.Login_System2.domain.model.TaskAssignment;
 import com.example.Login_System2.api.dto.TaskAssignmentDto.*;
+import com.example.Login_System2.api.util.ControllerUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,7 +17,6 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 
 @RestController
 @RequestMapping("/api/task-assignments")
@@ -39,7 +39,7 @@ public class TaskAssignmentController {
             return ResponseEntity.status(401).body("Authentication bulunamadı!");
 
         int userId = (Integer) authentication.getPrincipal();
-        String role = getRoleFromAuthentication(authentication);
+        String role = ControllerUtil.getRoleFromAuthentication(authentication);
 
         Optional<TaskAssignment> assignment = taskAssignmentUseCase.assignTask(
             userId, role, request.getTaskId(), request.getAssignedToId(), request.getMessage());
@@ -88,7 +88,7 @@ public class TaskAssignmentController {
         }
 
         int userId = (Integer) authentication.getPrincipal();
-        String role = getRoleFromAuthentication(authentication);
+        String role = ControllerUtil.getRoleFromAuthentication(authentication);
 
         List<TaskAssignment> assignments = taskAssignmentUseCase.getTaskAssignments(taskId, userId, role);
         
@@ -127,13 +127,6 @@ public class TaskAssignmentController {
         }
     }
 
-    private String getRoleFromAuthentication(Authentication authentication) {
-        return authentication.getAuthorities().stream()
-            .findFirst()
-            .map(GrantedAuthority::getAuthority)
-            .map(auth -> auth.replace("ROLE_", ""))
-            .orElse("USER");
-    }
 
     private TaskAssignmentResponse toResponseDTO(TaskAssignment assignment) {
         TaskAssignmentResponse dto = new TaskAssignmentResponse();

@@ -8,11 +8,10 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-
 import com.example.Login_System2.application.usecase.TaskUseCase;
 import com.example.Login_System2.domain.model.Task;
 import com.example.Login_System2.domain.model.User;
+import com.example.Login_System2.api.util.ControllerUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +34,7 @@ public class TaskController {
 
     private final TaskUseCase taskUseCase;
     
-    @PostMapping("/tasks")
+    @PostMapping
     @Operation(
         summary = "Yeni görev oluştur",
         description = "Kullanıcılar yeni görev oluşturabilir. USER sadece kendi görevlerini oluşturabilir."
@@ -54,10 +53,11 @@ public class TaskController {
         }
 
         int userId = (Integer) authentication.getPrincipal();
-        String role = getRoleFromAuthentication(authentication);
+        String role = ControllerUtil.getRoleFromAuthentication(authentication);
 
         System.out.println("UserId: " + userId);
         System.out.println("Role: " + role);
+        System.out.println("Request ownerId: " + request.getOwnerId());
 
         Task newTask = new Task();
         newTask.setTitle(request.getTitle());
@@ -67,18 +67,29 @@ public class TaskController {
         User owner = new User();
         owner.setId(request.getOwnerId());
         newTask.setOwner(owner);
+        
+        System.out.println("Task owner ID: " + newTask.getOwner().getId());
     
         Optional<Task> created = taskUseCase.createTask(userId, role, newTask);
     
         if (created.isPresent()) {
-            TaskResponse response = toResponseDTO(created.get());
-            return ResponseEntity.ok(response);
+            System.out.println("Task başarıyla oluşturuldu! Task ID: " + created.get().getId());
+            try {
+                TaskResponse response = ControllerUtil.toTaskResponse(created.get());
+                System.out.println("Response DTO başarıyla oluşturuldu!");
+                return ResponseEntity.ok(response);
+            } catch (Exception e) {
+                System.out.println("Response DTO oluşturulurken hata: " + e.getMessage());
+                e.printStackTrace();
+                return ResponseEntity.status(500).body("Response oluşturulurken hata: " + e.getMessage());
+            }
         } else {
+            System.out.println("Task oluşturulamadı!");
             return ResponseEntity.status(403).body("Görev oluşturma yetkiniz yok veya hata oluştu.");
         }
     }
 
-    @GetMapping("/tasks/{taskId}")
+    @GetMapping("/{taskId}")
     @Operation(
         summary = "Belirli bir görevi getir",
         description = "Görev ID'sine göre görev detaylarını getirir. USER sadece kendi görevlerini görebilir."
@@ -98,7 +109,7 @@ public class TaskController {
         }
 
         int userId = (Integer) authentication.getPrincipal();
-        String role = getRoleFromAuthentication(authentication);
+        String role = ControllerUtil.getRoleFromAuthentication(authentication);
 
         System.out.println("UserId: " + userId);
         System.out.println("Role: " + role);
@@ -107,7 +118,7 @@ public class TaskController {
         Optional<Task> task = taskUseCase.getTask(userId, role, taskId);
 
         if (task.isPresent()) {
-            TaskResponse response = toResponseDTO(task.get());
+            TaskResponse response = ControllerUtil.toTaskResponse(task.get());
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(404).body("Görev bulunamadı.");
@@ -115,7 +126,7 @@ public class TaskController {
     }
 
 
-    @GetMapping("/tasks")
+    @GetMapping
     @Operation(
         summary = "Tüm görevleri listele",
         description = "Filtreleme seçenekleri ile görevleri listeler. USER sadece kendi görevlerini görebilir."
@@ -141,7 +152,7 @@ public class TaskController {
         }
 
         int userId = (Integer) authentication.getPrincipal();
-        String role = getRoleFromAuthentication(authentication);
+        String role = ControllerUtil.getRoleFromAuthentication(authentication);
 
         System.out.println("UserId: " + userId);
         System.out.println("Role: " + role);
@@ -173,13 +184,13 @@ public class TaskController {
         List<Task> tasks = taskUseCase.getAllTasks(userId, role, ownerId, statusEnum, priorityEnum, title);
         
         List<TaskResponse> responses = tasks.stream()
-            .map(this::toResponseDTO)
+            .map(ControllerUtil::toTaskResponse)
             .collect(java.util.stream.Collectors.toList());
         
         return ResponseEntity.ok(responses);
     }
 
-    @PutMapping("/tasks/{taskId}")
+    @PutMapping("/{taskId}")
     @Operation(
         summary = "Görevi güncelle",
         description = "Mevcut görevi günceller. USER sadece kendi görevlerini güncelleyebilir."
@@ -200,7 +211,7 @@ public class TaskController {
         }
 
         int userId = (Integer) authentication.getPrincipal();
-        String role = getRoleFromAuthentication(authentication);
+        String role = ControllerUtil.getRoleFromAuthentication(authentication);
 
         System.out.println("UserId: " + userId);
         System.out.println("Role: " + role);
@@ -215,14 +226,14 @@ public class TaskController {
         Optional<Task> updated = taskUseCase.updateTask(userId, role, taskId, updatedTask);
 
         if (updated.isPresent()) {
-            TaskResponse response = toResponseDTO(updated.get());
+            TaskResponse response = ControllerUtil.toTaskResponse(updated.get());
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(403).body("Görev güncelleme yetkiniz yok veya görev bulunamadı.");
         }
     }
 
-    @DeleteMapping("/tasks/{taskId}")
+    @DeleteMapping("/{taskId}")
     @Operation(
         summary = "Görevi sil",
         description = "Görevi kalıcı olarak siler. USER sadece kendi görevlerini silebilir."
@@ -241,7 +252,7 @@ public class TaskController {
         }
 
         int userId = (Integer) authentication.getPrincipal();
-        String role = getRoleFromAuthentication(authentication);
+        String role = ControllerUtil.getRoleFromAuthentication(authentication);
 
         System.out.println("UserId: " + userId);
         System.out.println("Role: " + role);
@@ -257,22 +268,5 @@ public class TaskController {
     }
 
 
-    private String getRoleFromAuthentication(Authentication authentication) {
-        return authentication.getAuthorities().stream()
-            .findFirst()
-            .map(GrantedAuthority::getAuthority)
-            .map(auth -> auth.replace("ROLE_", ""))
-            .orElse("USER");
-    }
 
-    private TaskResponse toResponseDTO(Task task) {
-        TaskResponse dto = new TaskResponse();
-        dto.setId(task.getId());
-        dto.setTitle(task.getTitle());
-        dto.setDescription(task.getDescription());
-        dto.setStatus(task.getStatus());
-        dto.setPriority(task.getPriority());
-        dto.setOwnerId(task.getOwner().getId());
-        return dto;
-    }
 }

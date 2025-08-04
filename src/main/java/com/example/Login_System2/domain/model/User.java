@@ -39,6 +39,9 @@ public class User {
     @OneToMany(mappedBy = "currentAssignee", cascade = CascadeType.ALL)
     private List<Task> currentlyAssignedTasks = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<TaskComment> comments = new ArrayList<>();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

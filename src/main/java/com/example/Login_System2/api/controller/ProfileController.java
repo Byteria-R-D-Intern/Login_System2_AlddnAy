@@ -11,7 +11,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import com.example.Login_System2.api.dto.*;
+import com.example.Login_System2.api.dto.ProfileDto.UserProfileRequest;
+import com.example.Login_System2.api.dto.ProfileDto.UserProfileResponse;
 
 import jakarta.validation.Valid;
 

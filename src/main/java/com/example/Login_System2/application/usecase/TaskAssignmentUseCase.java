@@ -50,6 +50,16 @@ public class TaskAssignmentUseCase {
             return Optional.empty();
         }
 
+        List<TaskAssignment> existingAssignments = taskAssignmentRepository.findByTaskId(taskId);
+        boolean alreadyAssigned = existingAssignments.stream()
+            .anyMatch(a -> a.getAssignedTo().getId() == assignedToId && 
+                        (a.getStatus() == AssignmentStatus.PENDING || a.getStatus() == AssignmentStatus.ACCEPTED));
+
+        if (alreadyAssigned) {
+            log.warn("Bu kullanıcı zaten bu göreve atanmış! assignedToId={}", assignedToId);
+            return Optional.empty();
+        }
+
         Task task = taskOpt.get();
         User assignedTo = assignedToOpt.get();
 
@@ -112,6 +122,8 @@ public class TaskAssignmentUseCase {
             Task task = assignment.getTask();
             task.setCurrentAssignee(assignment.getAssignedTo());
             taskRepository.save(task);
+            log.info("Task currentAssignee güncellendi: taskId={}, newAssigneeId={}", 
+                    task.getId(), assignment.getAssignedTo().getId());
         }
 
         TaskAssignment savedAssignment = taskAssignmentRepository.save(assignment);

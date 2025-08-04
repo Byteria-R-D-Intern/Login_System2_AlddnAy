@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
+import com.example.Login_System2.api.dto.UserResponse;
 
 @Data
 @NoArgsConstructor
@@ -21,4 +22,7 @@ public class TaskAssignmentResponse {
     private LocalDateTime assignedAt;
     private LocalDateTime respondedAt;
     private String message;
+    private UserResponse assignedTo;
+    private UserResponse assignedBy;
+
 }

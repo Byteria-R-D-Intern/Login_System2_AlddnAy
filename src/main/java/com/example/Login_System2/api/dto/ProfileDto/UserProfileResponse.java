@@ -1,17 +1,21 @@
-package com.example.Login_System2.api.dto;
+package com.example.Login_System2.api.dto.ProfileDto;
 
 import java.time.LocalDate;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class ProfileResponse {
+public class UserProfileResponse {
+
     private int id;
     private String adres;
     private String telefon;
     private LocalDate birthDate;
+    private int userId;
+    
 }

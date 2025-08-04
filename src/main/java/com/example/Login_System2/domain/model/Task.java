@@ -44,4 +44,7 @@ public class Task{
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Priority priority;
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<TaskComment> comments = new ArrayList<>();
 }

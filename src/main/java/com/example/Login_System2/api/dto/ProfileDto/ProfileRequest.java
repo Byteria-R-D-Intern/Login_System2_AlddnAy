@@ -1,4 +1,4 @@
-package com.example.Login_System2.api.dto;
+package com.example.Login_System2.api.dto.ProfileDto;
 
 import java.time.LocalDate;
 import lombok.Data;
