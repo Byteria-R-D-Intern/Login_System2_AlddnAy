@@ -1,0 +1,654 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Görevlerim - Eğitim Platformu</title>
+    <style>
+        body {
+            font-family: 'Cambria', 'Hoefler Text', 'Liberation Serif', Times, 'Times New Roman', serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f1f3f4;
+            padding-bottom: 20px;
+        }
+        
+        .page-title {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .filters {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .filter-input {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .task-card {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-color: #6c757d;
+        }
+        
+        .task-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+        }
+        
+        .task-description {
+            color: #6c757d;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-in_progress { background: #cce5ff; color: #004085; }
+        .status-completed { background: #d4edda; color: #155724; }
+        
+        .priority-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .priority-low { background: #d1ecf1; color: #0c5460; }
+        .priority-medium { background: #fff3cd; color: #856404; }
+        .priority-high { background: #f8d7da; color: #721c24; }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        
+        .no-tasks {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .no-tasks h3 {
+            margin-bottom: 10px;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 15px;
+        }
+        
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #6c757d;
+            box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.1);
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .tasks-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .task-meta {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">📋 Görevlerim</h1>
+        <div class="header-buttons">
+            <button class="btn btn-success" onclick="openCreateTaskModal()">➕ Yeni Görev</button>
+            <a href="/dashboard" class="btn btn-primary">🏠 Dashboard</a>
+            <button class="btn btn-danger" onclick="logout()">🚪 Çıkış</button>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters">
+        <div class="filter-group">
+            <label>🔍 Başlık Ara</label>
+            <input type="text" id="titleFilter" class="filter-input" placeholder="Görev başlığı..." onkeyup="filterTasks()">
+        </div>
+        <div class="filter-group">
+            <label>📊 Durum</label>
+            <select id="statusFilter" class="filter-input" onchange="filterTasks()">
+                <option value="">Tümü</option>
+                <option value="PENDING">Bekliyor</option>
+                <option value="IN_PROGRESS">Devam Ediyor</option>
+                <option value="COMPLETED">Tamamlandı</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>🎯 Öncelik</label>
+            <select id="priorityFilter" class="filter-input" onchange="filterTasks()">
+                <option value="">Tümü</option>
+                <option value="LOW">Düşük</option>
+                <option value="MEDIUM">Orta</option>
+                <option value="HIGH">Yüksek</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary" onclick="clearFilters()">🗑️ Temizle</button>
+        </div>
+    </div>
+    
+    <!-- Loading -->
+    <div id="loadingMessage" class="loading">
+        <h3>⏳ Görevler yükleniyor...</h3>
+    </div>
+    
+    <!-- Tasks Grid -->
+    <div id="tasksContainer" class="tasks-grid" style="display: none;">
+        <!-- Tasks will be loaded here -->
+    </div>
+    
+    <!-- No Tasks -->
+    <div id="noTasksMessage" class="no-tasks" style="display: none;">
+        <h3>📝 Henüz göreviniz yok</h3>
+        <p>Yeni bir görev oluşturmak için "Yeni Görev" butonuna tıklayın.</p>
+    </div>
+</div>
+
+<!-- Create/Edit Task Modal -->
+<div id="taskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">➕ Yeni Görev Oluştur</h2>
+            <span class="close" onclick="closeTaskModal()">&times;</span>
+        </div>
+        <form id="taskForm">
+            <div class="form-group">
+                <label for="taskTitle">📝 Başlık *</label>
+                <input type="text" id="taskTitle" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="taskDescription">📄 Açıklama</label>
+                <textarea id="taskDescription" class="form-control" placeholder="Görev detayları..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="taskStatus">📊 Durum</label>
+                <select id="taskStatus" class="form-control">
+                    <option value="PENDING">Bekliyor</option>
+                    <option value="IN_PROGRESS">Devam Ediyor</option>
+                    <option value="COMPLETED">Tamamlandı</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="taskPriority">🎯 Öncelik</label>
+                <select id="taskPriority" class="form-control">
+                    <option value="LOW">Düşük</option>
+                    <option value="MEDIUM" selected>Orta</option>
+                    <option value="HIGH">Yüksek</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-success" style="width: 100%;">💾 Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let allTasks = [];
+let currentEditingTaskId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Token kontrolü
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Tasks'ları yükle
+    loadTasks();
+    
+    // Form submit handler
+    document.getElementById('taskForm').addEventListener('submit', handleTaskSubmit);
+});
+
+// Tasks'ları API'den yükle
+async function loadTasks() {
+    const token = localStorage.getItem('authToken');
+    
+    try {
+        const response = await fetch('/api/tasks', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            allTasks = await response.json();
+            displayTasks(allTasks);
+        } else if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('authToken');
+            window.location.href = '/login';
+        } else {
+            throw new Error('Tasks yüklenemedi');
+        }
+    } catch (error) {
+        console.error('Error loading tasks:', error);
+        document.getElementById('loadingMessage').innerHTML = 
+            '<h3>❌ Görevler yüklenirken hata oluştu</h3><p>Lütfen sayfayı yenileyin.</p>';
+    }
+}
+// Tasks'ları ekranda göster
+function displayTasks(tasks) {
+    const container = document.getElementById('tasksContainer');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const noTasksMessage = document.getElementById('noTasksMessage');
+    
+    loadingMessage.style.display = 'none';
+    
+    if (tasks.length === 0) {
+        container.style.display = 'none';
+        noTasksMessage.style.display = 'block';
+        return;
+    }
+    
+    noTasksMessage.style.display = 'none';
+    container.style.display = 'grid';
+    
+    container.innerHTML = tasks.map(task => `
+        <div class="task-card">
+            <h3 class="task-title">${escapeHtml(task.title)}</h3>
+            <p class="task-description">${escapeHtml(task.description || 'Açıklama yok')}</p>
+            <div class="task-meta">
+                <span class="status-badge status-${task.status.toLowerCase()}">${getStatusText(task.status)}</span>
+                <span class="priority-badge priority-${task.priority.toLowerCase()}">${getPriorityText(task.priority)}</span>
+            </div>
+            <div class="task-actions">
+                <button class="btn btn-primary btn-sm" onclick="editTask(${task.id})">✏️ Düzenle</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">🗑️ Sil</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Task oluştur/düzenle modal'ını aç
+function openCreateTaskModal() {
+    currentEditingTaskId = null;
+    document.getElementById('modalTitle').textContent = '➕ Yeni Görev Oluştur';
+    document.getElementById('taskForm').reset();
+    document.getElementById('taskModal').style.display = 'block';
+}
+
+function editTask(taskId) {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    currentEditingTaskId = taskId;
+    document.getElementById('modalTitle').textContent = '✏️ Görev Düzenle';
+    document.getElementById('taskTitle').value = task.title;
+    document.getElementById('taskDescription').value = task.description || '';
+    document.getElementById('taskStatus').value = task.status;
+    document.getElementById('taskPriority').value = task.priority;
+    document.getElementById('taskModal').style.display = 'block';
+}
+
+function closeTaskModal() {
+    document.getElementById('taskModal').style.display = 'none';
+    currentEditingTaskId = null;
+}
+
+// Task form submit
+async function handleTaskSubmit(e) {
+    e.preventDefault();
+    
+    const token = localStorage.getItem('authToken');
+    const taskData = {
+        title: document.getElementById('taskTitle').value,
+        description: document.getElementById('taskDescription').value,
+        status: document.getElementById('taskStatus').value,
+        priority: document.getElementById('taskPriority').value
+    };
+    
+    const submitButton = document.querySelector('#taskForm button[type="submit"]');
+    const originalText = submitButton.textContent;
+    submitButton.textContent = '⏳ Kaydediliyor...';
+    submitButton.disabled = true;
+    
+    try {
+        let response;
+        if (currentEditingTaskId) {
+            // Update task
+            response = await fetch(`/api/tasks/${currentEditingTaskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(taskData)
+            });
+        } else {
+            // Create task
+            response = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(taskData)
+            });
+        }
+        
+        if (response.ok) {
+            closeTaskModal();
+            loadTasks(); // Refresh task list
+            showNotification(`Görev başarıyla ${currentEditingTaskId ? 'güncellendi' : 'oluşturuldu'}!`, 'success');
+        } else {
+            throw new Error('Task kaydedilemedi');
+        }
+    } catch (error) {
+        console.error('Error saving task:', error);
+        showNotification('Görev kaydedilirken hata oluştu!', 'error');
+    } finally {
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
+    }
+}
+
+// Task sil
+async function deleteTask(taskId) {
+    if (!confirm('Bu görevi silmek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    const token = localStorage.getItem('authToken');
+    
+    try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            loadTasks(); // Refresh task list
+            showNotification('Görev başarıyla silindi!', 'success');
+        } else {
+            throw new Error('Task silinemedi');
+        }
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        showNotification('Görev silinirken hata oluştu!', 'error');
+    }
+}
+
+// Filtreleme
+function filterTasks() {
+    const titleFilter = document.getElementById('titleFilter').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const priorityFilter = document.getElementById('priorityFilter').value;
+    
+    const filteredTasks = allTasks.filter(task => {
+        const titleMatch = task.title.toLowerCase().includes(titleFilter);
+        const statusMatch = !statusFilter || task.status === statusFilter;
+        const priorityMatch = !priorityFilter || task.priority === priorityFilter;
+        
+        return titleMatch && statusMatch && priorityMatch;
+    });
+    
+    displayTasks(filteredTasks);
+}
+
+function clearFilters() {
+    document.getElementById('titleFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('priorityFilter').value = '';
+    displayTasks(allTasks);
+}
+
+// Utility functions
+function getStatusText(status) {
+    const statusMap = {
+        'PENDING': 'Bekliyor',
+        'IN_PROGRESS': 'Devam Ediyor',
+        'COMPLETED': 'Tamamlandı'
+    };
+    return statusMap[status] || status;
+}
+
+function getPriorityText(priority) {
+    const priorityMap = {
+        'LOW': 'Düşük',
+        'MEDIUM': 'Orta',
+        'HIGH': 'Yüksek'
+    };
+    return priorityMap[priority] || priority;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showNotification(message, type) {
+    // Basit notification - daha sonra geliştirebiliriz
+    alert(message);
+}
+
+function logout() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    window.location.href = '/login';
+}
+
+// Modal dışına tıklanınca kapat
+window.onclick = function(event) {
+    const modal = document.getElementById('taskModal');
+    if (event.target === modal) {
+        closeTaskModal();
+    }
+}
+</script>
+
+</body>
+</html>

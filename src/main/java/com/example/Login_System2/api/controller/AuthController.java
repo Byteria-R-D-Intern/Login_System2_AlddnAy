@@ -61,19 +61,20 @@ public class AuthController {
         summary = "Kullanıcı güncelleme",
         description = "Kullanıcı bilgilerini günceller. Sadece ADMIN yetkisi gerekir."
     )
-    public ResponseEntity<?> deleteUser(
+    public ResponseEntity<?> updateUser(
         @PathVariable int id,
         @RequestBody User updateUser,
-        @RequestHeader("Authorization") String autheHeader){
+        @RequestHeader("Authorization") String authHeader){
 
-        String token = autheHeader.substring(7);
+        String token = authHeader.substring(7);
+        int requesterId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractUserRole(token);
 
         if (!"ADMIN".equals(role))
             return ResponseEntity.status(403).body("Yetkisiz erişim !!!");
 
-        return userUseCase.updateUser(id , updateUser)
-            .map(user -> ResponseEntity.ok(user))
+        return userUseCase.updateUser(requesterId, role, id, updateUser)
+            .map(tokenResponse -> ResponseEntity.ok(Map.of("token", tokenResponse, "message", "User updated successfully")))
             .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -87,12 +88,13 @@ public class AuthController {
         @RequestHeader("Authorization") String authHeader){
 
         String token = authHeader.substring(7);
+        int requesterId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractUserRole(token);
 
         if (!"ADMIN".equals(role))
             return ResponseEntity.status(403).body("Yetkisiz erişim !!!");
 
-        boolean deleted = userUseCase.deleteUser(id);
+        boolean deleted = userUseCase.deleteUser(requesterId, role, id);
 
         if(deleted)
             return ResponseEntity.ok("Kullanıcı silindi.");

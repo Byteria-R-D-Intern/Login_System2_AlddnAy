@@ -1,0 +1,252 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard - Eğitim Platformu</title>
+    <style>
+        body {
+            font-family: 'Cambria', 'Hoefler Text', 'Liberation Serif', Times, 'Times New Roman', serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f1f3f4;
+            padding-bottom: 20px;
+        }
+        
+        .welcome-section h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .user-info {
+            color: #6c757d;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        
+        .logout-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .dashboard-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            border-color: #6c757d;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-weight: bold;
+        }
+        
+        .card-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .card-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .card-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(108, 117, 125, 0.3);
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header">
+        <div class="welcome-section">
+            <h1>🎓 Eğitim Platformu Dashboard</h1>
+            <div class="user-info">
+                <span id="welcomeMessage">Hoş geldin!</span> | 
+                <span id="userRole">Kullanıcı</span>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">🚪 Çıkış Yap</button>
+    </div>
+    
+    <div id="successMessage" class="success-message" style="display: none;">
+        Başarıyla giriş yaptınız! 🎉
+    </div>
+    
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h3 class="card-title">📋 Görevlerim</h3>
+            <p class="card-description">
+                Görevlerinizi görüntüleyin, düzenleyin ve yeni görevler oluşturun.
+            </p>
+            <a href="#" class="card-btn" onclick="openTasks()">Görevleri Görüntüle</a>
+        </div>
+        
+        <div class="dashboard-card">
+            <h3 class="card-title">👤 Profil Yönetimi</h3>
+            <p class="card-description">
+                Profil bilgilerinizi görüntüleyin ve güncelleyin.
+            </p>
+            <a href="#" class="card-btn" onclick="openProfile()">Profili Düzenle</a>
+        </div>
+        
+        <div class="dashboard-card">
+            <h3 class="card-title">📚 API Dokümantasyonu</h3>
+            <p class="card-description">
+                Swagger UI ile API endpoint'lerini test edin.
+            </p>
+            <a href="/swagger-ui/index.html" class="card-btn" target="_blank">API'yi Keşfet</a>
+        </div>
+        
+        <div class="dashboard-card" id="adminCard" style="display: none;">
+            <h3 class="card-title">👑 Yönetici Paneli</h3>
+            <p class="card-description">
+                Sistem yönetimi ve kullanıcı yönetimi işlemleri.
+            </p>
+            <a href="#" class="card-btn" onclick="openAdmin()">Yönetici Paneli</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Token kontrolü
+    const token = localStorage.getItem('authToken');
+    const userEmail = localStorage.getItem('userEmail');
+    const userRole = localStorage.getItem('userRole');
+    
+    if (!token) {
+        // Token yoksa login'e yönlendir
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Kullanıcı bilgilerini göster
+    if (userEmail) {
+        document.getElementById('welcomeMessage').textContent = `Hoş geldin, ${userEmail}`;
+    }
+    
+    if (userRole) {
+        const roleText = {
+            'USER': '👨‍🎓 Öğrenci',
+            'MANAGER': '👔 Eğitmen', 
+            'ADMIN': '👑 Yönetici'
+        };
+        document.getElementById('userRole').textContent = roleText[userRole] || userRole;
+        
+        // Admin kartını göster
+        if (userRole === 'ADMIN') {
+            document.getElementById('adminCard').style.display = 'block';
+        }
+    }
+    
+    // Başarı mesajını göster
+    document.getElementById('successMessage').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('successMessage').style.display = 'none';
+    }, 5000);
+});
+
+// Logout fonksiyonu
+function logout() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    window.location.href = '/login';
+}
+
+// Görevler sayfası (geçici)
+function openTasks() {
+    alert('Görevler sayfası yakında gelecek! 📋');
+}
+
+// Profil sayfası (geçici)
+function openProfile() {
+    alert('Profil sayfası yakında gelecek! 👤');
+}
+
+// Admin paneli (geçici)
+function openAdmin() {
+    alert('Admin paneli yakında gelecek! 👑');
+}
+</script>
+
+</body>
+</html>

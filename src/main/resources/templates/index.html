@@ -1,0 +1,439 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Giriş - Eğitim Platformu</title>
+    <link th:href="@{/css/giris.css}" rel="stylesheet" type="text/css">
+    <style>
+         body {
+            font-family: 'Cambria', 'Hoefler Text', 'Liberation Serif', Times, 'Times New Roman', serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .main-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px;
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid rgba(200, 200, 200, 0.3);
+        }
+        
+        .platform-header {
+            margin-bottom: 30px;
+        }
+        
+        .platform-title {
+            font-size: 28px;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+            font-weight: bold;
+        }
+        
+        .platform-subtitle {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin: 0 0 30px 0;
+        }
+        
+        .login-title {
+            font-size: 24px;
+            color: #34495e;
+            margin: 0 0 30px 0;
+            font-weight: 600;
+        }
+        
+        .role-selection {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        
+        .role-label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .role-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .role-option {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 12px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #e9ecef;
+            min-width: 120px;
+            justify-content: center;
+        }
+        
+        .role-option:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            border-color: #6c757d;
+        }
+        
+        .role-option input[type="radio"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+            accent-color: #495057;
+        }
+        
+        .role-option input[type="radio"]:checked + .role-text {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        
+        .role-option:has(input[type="radio"]:checked) {
+            background: #dee2e6;
+            border-color: #495057;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            background-color: #f8f9fa;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #6c757d;
+            box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.1);
+            background-color: #ffffff;
+        }
+        
+        .test-users-box {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .test-users-title {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .test-user-item {
+            margin: 8px 0;
+            font-size: 14px;
+            opacity: 0.95;
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+            background: linear-gradient(135deg, #5a6268 0%, #343a40 100%);
+        }
+        
+        .register-links {
+            margin-top: 25px;
+            text-align: center;
+        }
+        
+        .register-links p {
+            margin: 8px 0;
+            color: #6c757d;
+        }
+        
+        .register-links a {
+            color: #495057;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+        
+        .register-links a:hover {
+            color: #343a40;
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+            text-align: center;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+            text-align: center;
+        }
+        
+        /* Ana başlık için özel stil */
+        .platform-title {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Role kartları için subtle gölge */
+        .role-option {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Form inputları için daha yumuşak görünüm */
+        .form-input::placeholder {
+            color: #adb5bd;
+        }
+        
+        @media (max-width: 600px) {
+            .main-container {
+                margin: 10px;
+            }
+            
+            .login-card {
+                padding: 30px 20px;
+            }
+            
+            .role-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .role-option {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Login form'unu bul
+        const loginForm = document.querySelector('form');
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault(); // Normal form submit'i engelle
+                
+                // Form verilerini al
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const loginType = document.querySelector('input[name="loginType"]:checked').value;
+                
+                // Loading state göster
+                const submitButton = document.querySelector('.login-button');
+                const originalText = submitButton.textContent;
+                submitButton.textContent = '⏳ Giriş yapılıyor...';
+                submitButton.disabled = true;
+                
+                try {
+                    // API'ye login isteği gönder
+                    const response = await fetch('http://localhost:8081/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        // Başarılı giriş
+                        const data = await response.json();
+                        
+                        // Token'ı localStorage'da sakla
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('userEmail', email);
+                        localStorage.setItem('userRole', loginType);
+                        
+                        // Başarı mesajı göster
+                        showMessage('Başarılı! Yönlendiriliyorsunuz...', 'success');
+                        
+                        // 1 saniye sonra dashboard'a yönlendir
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 1000);
+                        
+                    } else {
+                        // Hata durumu
+                        showMessage('E-posta veya şifre yanlış!', 'error');
+                    }
+                    
+                } catch (error) {
+                    // Network hatası
+                    showMessage('Bağlantı hatası! Lütfen tekrar deneyin.', 'error');
+                    console.error('Login error:', error);
+                } finally {
+                    // Button'ı eski haline getir
+                    submitButton.textContent = originalText;
+                    submitButton.disabled = false;
+                }
+            });
+        }
+        
+        // Mesaj gösterme fonksiyonu
+        function showMessage(message, type) {
+            // Eski mesajları temizle
+            const oldMessages = document.querySelectorAll('.dynamic-message');
+            oldMessages.forEach(msg => msg.remove());
+            
+            // Yeni mesaj oluştur
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `dynamic-message ${type === 'success' ? 'success-message' : 'error-message'}`;
+            messageDiv.textContent = message;
+            
+            // Form'un üstüne ekle
+            const form = document.querySelector('form');
+            form.parentNode.insertBefore(messageDiv, form);
+            
+            // 5 saniye sonra mesajı kaldır
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+    });
+    </script>
+
+
+<body>
+
+<div class="main-container">
+    <div class="login-card">
+        <div class="platform-header">
+            <h1 class="platform-title">🎓 Eğitim Platformu</h1>
+            <p class="platform-subtitle">Geleceğinizi şekillendirin</p>
+        </div>
+        
+        <h2 class="login-title">🔐 Sisteme Giriş</h2>
+        
+        <!-- Hata ve başarı mesajları -->
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+        <div th:if="${message}" class="success-message" th:text="${message}"></div>
+        
+        <!-- Login Form -->
+        <form th:action="@{/login}" method="post">
+            
+            <!-- Role Seçimi -->
+            <div class="role-selection">
+                <label class="role-label">👤 Giriş Türünüzü Seçin:</label>
+                <div class="role-options">
+                    <label class="role-option">
+                        <input type="radio" name="loginType" value="USER" checked>
+                        <span class="role-text">👨‍🎓 Öğrenci</span>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" name="loginType" value="MANAGER">
+                        <span class="role-text">👔 Eğitmen</span>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" name="loginType" value="ADMIN">
+                        <span class="role-text">👑 Yönetici</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Email input -->
+            <div class="form-group">
+                <label for="email">📧 E-posta Adresi</label>
+                <input type="email" id="email" name="email" required 
+                       th:value="${email}" 
+                       placeholder="ornek@email.com"
+                       class="form-input">
+            </div>
+            
+            <!-- Password input -->
+            <div class="form-group">
+                <label for="password">🔒 Şifre</label>
+                <input type="password" id="password" name="password" required
+                       placeholder="Şifrenizi girin"
+                       class="form-input">
+            </div>
+            
+            <!-- Test kullanıcıları bilgi kutusu -->
+            <div class="test-users-box">
+                <h4 class="test-users-title">🧪 Test Kullanıcıları</h4>
+                <div class="test-user-item"><strong>👨‍🎓 Öğrenci:</strong> user1@test.com / password</div>
+                <div class="test-user-item"><strong>👔 Eğitmen:</strong> manager1@test.com / password</div>
+                <div class="test-user-item"><strong>👑 Yönetici:</strong> admin1@test.com / password</div>
+            </div>
+            
+            <!-- Login button -->
+            <button type="submit" class="login-button">
+                🚀 Sisteme Giriş Yap
+            </button>
+        </form>
+        
+        <!-- Register links -->
+        <div class="register-links">
+            <p>Hesabınız yok mu? <a th:href="@{/register}">Kayıt Ol</a></p>
+            <p><a th:href="@{/dashboard}">🏠 Ana Sayfaya Git</a></p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
