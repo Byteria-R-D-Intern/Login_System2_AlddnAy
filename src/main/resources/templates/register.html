@@ -1,0 +1,590 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kayıt Ol - Eğitim Platformu</title>
+    <style>
+        body {
+            font-family: 'Cambria', 'Hoefler Text', 'Liberation Serif', Times, 'Times New Roman', serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .main-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px;
+        }
+        
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid rgba(200, 200, 200, 0.3);
+        }
+        
+        .platform-header {
+            margin-bottom: 30px;
+        }
+        
+        .platform-title {
+            font-size: 28px;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+            font-weight: bold;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .platform-subtitle {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin: 0 0 30px 0;
+        }
+        
+        .register-title {
+            font-size: 24px;
+            color: #34495e;
+            margin: 0 0 30px 0;
+            font-weight: 600;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            background-color: #f8f9fa;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #6c757d;
+            box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.1);
+            background-color: #ffffff;
+        }
+        
+        .form-input::placeholder {
+            color: #adb5bd;
+        }
+        
+        .role-selection {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        
+        .role-label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .role-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .role-option {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 12px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #e9ecef;
+            min-width: 120px;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .role-option:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            border-color: #6c757d;
+        }
+        
+        .role-option input[type="radio"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+            accent-color: #495057;
+        }
+        
+        .role-option input[type="radio"]:checked + .role-text {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        
+        .role-option:has(input[type="radio"]:checked) {
+            background: #dee2e6;
+            border-color: #495057;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .password-requirements {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .password-requirements h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .password-requirements ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .password-requirements li {
+            margin: 5px 0;
+        }
+        
+        .register-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .register-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+            background: linear-gradient(135deg, #218838 0%, #1ea976 100%);
+        }
+        
+        .register-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .login-links {
+            margin-top: 25px;
+            text-align: center;
+        }
+        
+        .login-links p {
+            margin: 8px 0;
+            color: #6c757d;
+        }
+        
+        .login-links a {
+            color: #495057;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+        
+        .login-links a:hover {
+            color: #343a40;
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+            text-align: center;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+            text-align: center;
+        }
+        
+        .password-strength {
+            margin-top: 10px;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .strength-weak { background: #dc3545; width: 33%; }
+        .strength-medium { background: #ffc107; width: 66%; }
+        .strength-strong { background: #28a745; width: 100%; }
+        
+        @media (max-width: 600px) {
+            .main-container {
+                margin: 10px;
+            }
+            
+            .register-card {
+                padding: 30px 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            
+            .role-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .role-option {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="register-card">
+        <div class="platform-header">
+            <h1 class="platform-title">🎓 Eğitim Platformu</h1>
+            <p class="platform-subtitle">Geleceğinizi şekillendirin</p>
+        </div>
+        
+        <h2 class="register-title">📝 Hesap Oluştur</h2>
+        
+        <!-- Hata ve başarı mesajları -->
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+        <div th:if="${message}" class="success-message" th:text="${message}"></div>
+        
+        <!-- Register Form -->
+        <form th:action="@{/register}" method="post" id="registerForm">
+            
+            <!-- Ad Soyad -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">👤 Ad</label>
+                    <input type="text" id="name" name="name" required 
+                           th:value="${name}" 
+                           placeholder="Adınızı girin"
+                           class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="surname">👤 Soyad</label>
+                    <input type="text" id="surname" name="surname" required 
+                           th:value="${surname}" 
+                           placeholder="Soyadınızı girin"
+                           class="form-input">
+                </div>
+            </div>
+            
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email">📧 E-posta Adresi</label>
+                <input type="email" id="email" name="email" required 
+                       th:value="${email}" 
+                       placeholder="ornek@email.com"
+                       class="form-input">
+            </div>
+            
+            <!-- Role Seçimi -->
+            <div class="role-selection">
+                <label class="role-label">👤 Hesap Türünüzü Seçin:</label>
+                <div class="role-options">
+                    <label class="role-option">
+                        <input type="radio" name="role" value="USER" checked>
+                        <span class="role-text">👨‍🎓 Öğrenci</span>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" name="role" value="MANAGER">
+                        <span class="role-text">👔 Eğitmen</span>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" name="role" value="ADMIN">
+                        <span class="role-text">👑 Yönetici</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password">🔒 Şifre</label>
+                <input type="password" id="password" name="password" required
+                       placeholder="Güçlü bir şifre oluşturun"
+                       class="form-input"
+                       oninput="checkPasswordStrength()">
+                <div class="password-strength">
+                    <div id="passwordStrengthBar" class="password-strength-bar"></div>
+                </div>
+            </div>
+            
+            <!-- Confirm Password -->
+            <div class="form-group">
+                <label for="confirmPassword">🔒 Şifre Tekrar</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required
+                       placeholder="Şifrenizi tekrar girin"
+                       class="form-input"
+                       oninput="checkPasswordMatch()">
+                <div id="passwordMatchMessage" style="margin-top: 5px; font-size: 14px;"></div>
+            </div>
+            
+            <!-- Şifre Gereksinimleri -->
+            <div class="password-requirements">
+                <h4>🔐 Şifre Gereksinimleri:</h4>
+                <ul>
+                    <li>En az 8 karakter uzunluğunda</li>
+                    <li>En az bir büyük harf (A-Z)</li>
+                    <li>En az bir küçük harf (a-z)</li>
+                    <li>En az bir rakam (0-9)</li>
+                    <li>Özel karakterler kullanabilirsiniz (!@#$%^&*)</li>
+                </ul>
+            </div>
+            
+            <!-- Register button -->
+            <button type="submit" class="register-button" id="registerBtn" disabled>
+                🚀 Hesap Oluştur
+            </button>
+        </form>
+        
+        <!-- Login links -->
+        <div class="login-links">
+            <p>Zaten hesabınız var mı? <a th:href="@{/login}">Giriş Yap</a></p>
+            <p><a th:href="@{/dashboard}">🏠 Ana Sayfaya Git</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+let passwordValid = false;
+let passwordMatch = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Register form handler
+    const registerForm = document.getElementById('registerForm');
+    
+    if (registerForm) {
+        registerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!passwordValid) {
+                showMessage('Şifre gereksinimlerini karşılamıyor!', 'error');
+                return;
+            }
+            
+            if (!passwordMatch) {
+                showMessage('Şifreler eşleşmiyor!', 'error');
+                return;
+            }
+            
+            // Form verilerini al
+            const formData = {
+                name: document.getElementById('name').value,
+                surname: document.getElementById('surname').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                role: document.querySelector('input[name="role"]:checked').value
+            };
+            
+            // Loading state göster
+            const submitButton = document.getElementById('registerBtn');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = '⏳ Hesap oluşturuluyor...';
+            submitButton.disabled = true;
+            
+            try {
+                // API'ye register isteği gönder
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    // Başarılı kayıt
+                    const data = await response.json();
+                    
+                    // Token'ı localStorage'da sakla
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userEmail', formData.email);
+                    localStorage.setItem('userRole', formData.role);
+                    
+                    // Başarı mesajı göster
+                    showMessage('Hesap başarıyla oluşturuldu! Yönlendiriliyorsunuz...', 'success');
+                    
+                    // 1.5 saniye sonra dashboard'a yönlendir
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                    
+                } else {
+                    // Hata durumu
+                    const errorText = await response.text();
+                    showMessage(errorText || 'Hesap oluşturulamadı!', 'error');
+                }
+                
+            } catch (error) {
+                // Network hatası
+                showMessage('Bağlantı hatası! Lütfen tekrar deneyin.', 'error');
+                console.error('Register error:', error);
+            } finally {
+                // Button'ı eski haline getir
+                submitButton.textContent = originalText;
+                updateSubmitButton();
+            }
+        });
+    }
+});
+
+// Şifre gücü kontrolü
+function checkPasswordStrength() {
+    const password = document.getElementById('password').value;
+    const strengthBar = document.getElementById('passwordStrengthBar');
+    
+    // Şifre gereksinimleri
+    const hasLength = password.length >= 8;
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    
+    const requirements = [hasLength, hasUpper, hasLower, hasNumber];
+    const fulfilledCount = requirements.filter(req => req).length;
+    
+    // Gücü hesapla
+    if (fulfilledCount < 2) {
+        strengthBar.className = 'password-strength-bar strength-weak';
+        passwordValid = false;
+    } else if (fulfilledCount < 4) {
+        strengthBar.className = 'password-strength-bar strength-medium';
+        passwordValid = false;
+    } else {
+        strengthBar.className = 'password-strength-bar strength-strong';
+        passwordValid = true;
+    }
+    
+    updateSubmitButton();
+    checkPasswordMatch(); // Şifre değiştiğinde eşleşme kontrolü yap
+}
+
+// Şifre eşleşme kontrolü
+function checkPasswordMatch() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const messageElement = document.getElementById('passwordMatchMessage');
+    
+    if (confirmPassword.length === 0) {
+        messageElement.textContent = '';
+        passwordMatch = false;
+    } else if (password === confirmPassword) {
+        messageElement.textContent = '✅ Şifreler eşleşiyor';
+        messageElement.style.color = '#28a745';
+        passwordMatch = true;
+    } else {
+        messageElement.textContent = '❌ Şifreler eşleşmiyor';
+        messageElement.style.color = '#dc3545';
+        passwordMatch = false;
+    }
+    
+    updateSubmitButton();
+}
+
+// Submit button durumunu güncelle
+function updateSubmitButton() {
+    const submitButton = document.getElementById('registerBtn');
+    const name = document.getElementById('name').value;
+    const surname = document.getElementById('surname').value;
+    const email = document.getElementById('email').value;
+    
+    const allFieldsFilled = name && surname && email && passwordValid && passwordMatch;
+    
+    submitButton.disabled = !allFieldsFilled;
+}
+
+// Mesaj gösterme fonksiyonu
+function showMessage(message, type) {
+    // Eski mesajları temizle
+    const oldMessages = document.querySelectorAll('.dynamic-message');
+    oldMessages.forEach(msg => msg.remove());
+    
+    // Yeni mesaj oluştur
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `dynamic-message ${type === 'success' ? 'success-message' : 'error-message'}`;
+    messageDiv.textContent = message;
+    
+    // Form'un üstüne ekle
+    const form = document.querySelector('form');
+    form.parentNode.insertBefore(messageDiv, form);
+    
+    // 5 saniye sonra mesajı kaldır
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 5000);
+}
+
+// Input event listeners ekle
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = ['name', 'surname', 'email'];
+    inputs.forEach(inputId => {
+        document.getElementById(inputId).addEventListener('input', updateSubmitButton);
+    });
+});
+</script>
+
+</body>
+</html>

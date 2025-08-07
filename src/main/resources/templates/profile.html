@@ -333,6 +333,23 @@
 let currentUser = null;
 let userStats = null;
 
+// JWT token'dan user ID çıkar
+function getUserIdFromToken(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        
+        const payload = JSON.parse(jsonPayload);
+        return payload.sub; // JWT'de user ID 'sub' field'ında
+    } catch (error) {
+        console.error('Token decode hatası:', error);
+        return null;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Token kontrolü
     const token = localStorage.getItem('authToken');
@@ -354,9 +371,17 @@ async function loadProfile() {
     const token = localStorage.getItem('authToken');
     
     try {
+        // Token'dan user ID çıkar
+        const userId = getUserIdFromToken(token);
+        if (!userId) {
+            console.error('Token\'dan user ID çıkarılamadı');
+            window.location.href = '/login';
+            return;
+        }
+        
         // User profile bilgilerini çek
         const [profileResponse, statsResponse] = await Promise.all([
-            fetch('/api/user/profile', {
+            fetch(`/api/user/profile/${userId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
