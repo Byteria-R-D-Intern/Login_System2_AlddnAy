@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Yönetim Paneli</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/dashboard.css"><!-- veya ayrı admin.css açabilirsin -->
+  <script src="/js/auth.js" defer></script>
+</head>
+<body class="dashboard-page">
+  <div class="dashboard-container">
+    <div class="header">
+      <div class="welcome-section">
+        <h1>👑 Yönetim Paneli</h1>
+        <div class="user-info">Sadece ADMIN</div>
+      </div>
+      <button class="logout-btn" onclick="Auth.logout()">🚪 Çıkış Yap</button>
+    </div>
+
+    <!-- Sekme butonları -->
+    <div class="actions" style="justify-content:flex-start; gap:8px;">
+      <button class="btn btn-primary" id="tabUsers">👥 Kullanıcılar</button>
+      <button class="btn btn-secondary" id="tabProfiles">🗂️ Profiller</button>
+      <a href="/tasks" class="btn btn-secondary">📋 Görevler</a>
+      <a href="/swagger-ui/index.html" target="_blank" class="btn btn-secondary">📚 Swagger</a>
+    </div>
+
+    <!-- Kullanıcı Yönetimi -->
+    <div id="usersPanel" class="card" style="margin-top:12px;">
+      <div class="title">Kullanıcı Yönetimi</div>
+      <div class="actions" style="justify-content:space-between;">
+        <div class="muted">Listeyi görmek için yükleyin.</div>
+        <div>
+          <button class="btn btn-primary" id="btnLoadUsers">Yükle</button>
+        </div>
+      </div>
+      <div id="usersLoading" class="muted hidden" style="margin-top:8px;">Yükleniyor...</div>
+      <div id="usersEmpty" class="muted hidden" style="margin-top:8px;">Kullanıcı bulunamadı</div>
+      <div style="overflow:auto;">
+        <table id="usersTable" class="table" style="width:100%; border-collapse:collapse; margin-top:8px;">
+          <thead>
+            <tr style="text-align:left;">
+              <th>ID</th>
+              <th>E-posta</th>
+              <th>Rol</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Profil Yönetimi -->
+    <div id="profilesPanel" class="card hidden" style="margin-top:12px;">
+      <div class="title">Profil Yönetimi</div>
+      <div class="actions" style="justify-content:space-between;">
+        <div class="muted">Listeyi görmek için yükleyin.</div>
+        <div>
+          <button class="btn btn-primary" id="btnLoadProfiles">Yükle</button>
+        </div>
+      </div>
+      <div id="profilesLoading" class="muted hidden" style="margin-top:8px;">Yükleniyor...</div>
+      <div id="profilesEmpty" class="muted hidden" style="margin-top:8px;">Profil bulunamadı</div>
+      <div style="overflow:auto;">
+        <table id="profilesTable" class="table" style="width:100%; border-collapse:collapse; margin-top:8px;">
+          <thead>
+            <tr style="text-align:left;">
+              <th>ProfilID</th>
+              <th>UserID</th>
+              <th>Telefon</th>
+              <th>Adres</th>
+              <th>Doğum Tarihi</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal (genel) -->
+    <div id="adminModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Düzenle</h3>
+          <span class="close" onclick="closeAdminModal()">&times;</span>
+        </div>
+        <form id="adminForm">
+          <div id="modalBody"></div>
+          <div class="actions" style="justify-content:flex-end; margin-top:12px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">İptal</button>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1) Admin guard
+    document.addEventListener('DOMContentLoaded', () => {
+      const session = Auth.ensureAuthenticated();
+      if (!session) return; // Auth helper redirect eder
+      if (session.role !== 'ADMIN') {
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      // Sekme butonları
+      document.getElementById('tabUsers').addEventListener('click', () => showPanel('users'));
+      document.getElementById('tabProfiles').addEventListener('click', () => showPanel('profiles'));
+      document.getElementById('btnLoadUsers').addEventListener('click', loadUsers);
+      document.getElementById('btnLoadProfiles').addEventListener('click', loadProfiles);
+
+      // Varsayılan: kullanıcılar paneli
+      showPanel('users');
+    });
+
+    function showPanel(which) {
+      const usersPanel = document.getElementById('usersPanel');
+      const profilesPanel = document.getElementById('profilesPanel');
+      if (which === 'users') {
+        usersPanel.classList.remove('hidden');
+        profilesPanel.classList.add('hidden');
+      } else {
+        profilesPanel.classList.remove('hidden');
+        usersPanel.classList.add('hidden');
+      }
+    };
+
+    // ------- Kullanıcılar -------
+    async function loadUsers() {
+      toggleLoading('users', true);
+      const res = await Auth.authFetch('/api/auth/users');
+      toggleLoading('users', false);
+      if (!res.ok) { alert('Kullanıcılar yüklenemedi'); return; }
+      const users = await res.json();
+      renderUsers(users);
+    }
+
+    function renderUsers(users) {
+      const tbody = document.querySelector('#usersTable tbody');
+      tbody.innerHTML = '';
+      if (!users || users.length === 0) {
+        toggleEmpty('users', true); return;
+      }
+      toggleEmpty('users', false);
+      users.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${u.id}</td>
+          <td>${escapeHtml(u.email)}</td>
+          <td>${escapeHtml(u.role)}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="openEditUser(${u.id}, '${escapeAttr(u.email)}', '${escapeAttr(u.role)}')">Düzenle</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Sil</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openEditUser(id, email, role) {
+      document.getElementById('modalTitle').textContent = `Kullanıcı #${id} Düzenle`;
+      document.getElementById('modalBody').innerHTML = `
+        <div class="field">
+          <label>E-posta</label>
+          <input id="editEmail" type="email" class="form-control" value="${escapeAttr(email)}" />
+        </div>
+        <div class="field" style="margin-top:8px;">
+          <label>Rol</label>
+          <select id="editRole" class="form-control">
+            <option value="USER" ${role==='USER'?'selected':''}>USER</option>
+            <option value="MANAGER" ${role==='MANAGER'?'selected':''}>MANAGER</option>
+            <option value="ADMIN" ${role==='ADMIN'?'selected':''}>ADMIN</option>
+          </select>
+        </div>
+      `;
+      document.getElementById('adminForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const payload = {
+          email: document.getElementById('editEmail').value,
+          name: '',
+          surname: '',
+          role: document.getElementById('editRole').value
+        };
+        const res = await Auth.authFetch(`/api/auth/users/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          closeAdminModal();
+          loadUsers();
+        } else {
+          alert('Güncelleme başarısız');
+        }
+      };
+      openAdminModal();
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Silmek istediğinize emin misiniz?')) return;
+      const res = await Auth.authFetch(`/api/auth/users/${id}`, { method: 'DELETE' });
+      if (res.ok) loadUsers(); else alert('Silme başarısız');
+    }
+
+    // ------- Profiller -------
+    async function loadProfiles() {
+      toggleLoading('profiles', true);
+      const res = await Auth.authFetch('/api/user/profile');
+      toggleLoading('profiles', false);
+      if (!res.ok) { alert('Profiller yüklenemedi'); return; }
+      const profiles = await res.json();
+      renderProfiles(profiles);
+    }
+
+    function renderProfiles(profiles) {
+      const tbody = document.querySelector('#profilesTable tbody');
+      tbody.innerHTML = '';
+      if (!profiles || profiles.length === 0) { toggleEmpty('profiles', true); return; }
+      toggleEmpty('profiles', false);
+      profiles.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.id ?? ''}</td>
+          <td>${p.userId ?? ''}</td>
+          <td>${escapeHtml(p.telefon ?? '')}</td>
+          <td>${escapeHtml(p.adres ?? '')}</td>
+          <td>${escapeHtml((p.birthDate || '').toString().substring(0,10))}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="openEditProfile(${p.userId}, '${escapeAttr(p.telefon ?? '')}', '${escapeAttr(p.adres ?? '')}', '${escapeAttr((p.birthDate || '').toString().substring(0,10))}')">Düzenle</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteProfile(${p.userId})">Sil</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openEditProfile(userId, telefon, adres, birthDate) {
+      document.getElementById('modalTitle').textContent = `Profil (UserID: ${userId}) Düzenle`;
+      document.getElementById('modalBody').innerHTML = `
+        <div class="field">
+          <label>Telefon</label>
+          <input id="editTelefon" type="text" class="form-control" value="${escapeAttr(telefon)}" />
+        </div>
+        <div class="field" style="margin-top:8px;">
+          <label>Adres</label>
+          <textarea id="editAdres" class="form-control" rows="3">${escapeHtml(adres)}</textarea>
+        </div>
+        <div class="field" style="margin-top:8px;">
+          <label>Doğum Tarihi</label>
+          <input id="editBirthDate" type="date" class="form-control" value="${escapeAttr(birthDate)}" />
+        </div>
+      `;
+      document.getElementById('adminForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const payload = {
+          telefon: document.getElementById('editTelefon').value,
+          adres: document.getElementById('editAdres').value,
+          birthDate: document.getElementById('editBirthDate').value || null
+        };
+        const res = await Auth.authFetch(`/api/user/profile/${userId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          closeAdminModal();
+          loadProfiles();
+        } else {
+          alert('Profil güncellenemedi');
+        }
+      };
+      openAdminModal();
+    }
+
+    async function deleteProfile(userId) {
+      if (!confirm('Profili silmek istediğinize emin misiniz?')) return;
+      const res = await Auth.authFetch(`/api/user/profile/${userId}`, { method: 'DELETE' });
+      if (res.ok) loadProfiles(); else alert('Profil silinemedi');
+    }
+
+    // ------- Modal helpers -------
+    function openAdminModal() {
+      document.getElementById('adminModal').style.display = 'block';
+    }
+    function closeAdminModal() {
+      document.getElementById('adminModal').style.display = 'none';
+      document.getElementById('adminForm').reset();
+    }
+
+    // ------- UI helpers -------
+    function toggleLoading(section, loading) {
+      const el = document.getElementById(section === 'users' ? 'usersLoading' : 'profilesLoading');
+      if (loading) el.classList.remove('hidden'); else el.classList.add('hidden');
+    }
+    function toggleEmpty(section, isEmpty) {
+      const el = document.getElementById(section === 'users' ? 'usersEmpty' : 'profilesEmpty');
+      if (isEmpty) el.classList.remove('hidden'); else el.classList.add('hidden');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    function escapeAttr(text) {
+      return String(text).replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

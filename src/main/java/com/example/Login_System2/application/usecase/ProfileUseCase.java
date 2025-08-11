@@ -5,6 +5,7 @@ import com.example.Login_System2.domain.model.UserProfile;
 import com.example.Login_System2.domain.model.Role;
 import com.example.Login_System2.application.service.JwtProvider;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -105,5 +106,13 @@ public class ProfileUseCase {
         UserProfile savedProfile = profileRepository.save(newProfile);
         log.info("Profil başarıyla oluşturuldu! profileId={}", savedProfile.getId());
         return Optional.of(savedProfile);
+    }
+
+    public List<UserProfile> listAllProfiles(String requesterRole) {
+        if (!"ADMIN".equals(requesterRole)) {
+            // ADMIN değilse listelemeyelim
+            return List.of();
+        }
+        return profileRepository.findAll();
     }
 }

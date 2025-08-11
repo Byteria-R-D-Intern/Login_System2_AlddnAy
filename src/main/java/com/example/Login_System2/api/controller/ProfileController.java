@@ -2,6 +2,8 @@ package com.example.Login_System2.api.controller;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 import java.util.Optional;
 import com.example.Login_System2.application.usecase.ProfileUseCase;
 import com.example.Login_System2.domain.model.UserProfile;
@@ -139,6 +141,20 @@ public class ProfileController {
         } else {
             return ResponseEntity.status(403).body("Profil silme yetkiniz yok veya profil bulunamadı.");
         }
+    }
+
+    @GetMapping
+    @Operation(summary = "Tüm profilleri listele (ADMIN)")
+    public ResponseEntity<?> listProfiles(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        String role = jwtUtil.extractUserRole(token);
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+
+        List<UserProfile> profiles = profileUseCase.listAllProfiles(role);
+        List<UserProfileResponse> responses = profiles.stream()
+            .map(this::toResponseDTO)
+            .toList();
+        return ResponseEntity.ok(responses);
     }
 
     // Domain modelden response DTO'ya dönüştürme yardımcı metodu

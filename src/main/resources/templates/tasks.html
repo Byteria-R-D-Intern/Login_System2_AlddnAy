@@ -4,295 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Görevlerim - Eğitim Platformu</title>
-    <style>
-        body {
-            font-family: 'Cambria', 'Hoefler Text', 'Liberation Serif', Times, 'Times New Roman', serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        
-        .page-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #f1f3f4;
-            padding-bottom: 20px;
-        }
-        
-        .page-title {
-            color: #2c3e50;
-            margin: 0;
-            font-size: 28px;
-        }
-        
-        .header-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-            color: white;
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .filters {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .filter-group label {
-            font-weight: bold;
-            color: #2c3e50;
-            font-size: 14px;
-        }
-        
-        .filter-input {
-            padding: 8px 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        
-        .tasks-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-        }
-        
-        .task-card {
-            background: #f8f9fa;
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-        
-        .task-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            border-color: #6c757d;
-        }
-        
-        .task-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin: 0 0 10px 0;
-        }
-        
-        .task-description {
-            color: #6c757d;
-            margin-bottom: 15px;
-            line-height: 1.4;
-        }
-        
-        .task-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .status-pending { background: #fff3cd; color: #856404; }
-        .status-in_progress { background: #cce5ff; color: #004085; }
-        .status-completed { background: #d4edda; color: #155724; }
-        
-        .priority-badge {
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .priority-low { background: #d1ecf1; color: #0c5460; }
-        .priority-medium { background: #fff3cd; color: #856404; }
-        .priority-high { background: #f8d7da; color: #721c24; }
-        
-        .task-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-        }
-        
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-        
-        .no-tasks {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-        
-        .no-tasks h3 {
-            margin-bottom: 10px;
-        }
-        
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-        
-        .modal-content {
-            background: white;
-            margin: 50px auto;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 15px;
-        }
-        
-        .close {
-            font-size: 28px;
-            font-weight: bold;
-            color: #aaa;
-            cursor: pointer;
-        }
-        
-        .close:hover {
-            color: #000;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #6c757d;
-            box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.1);
-        }
-        
-        textarea.form-control {
-            resize: vertical;
-            min-height: 100px;
-        }
-        
-        @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .filters {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .tasks-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .task-meta {
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/task.css">
+    <script src="/js/auth.js" defer></script>
 </head>
-<body>
+<body class="tasks-page">
 
 <div class="page-container">
     <div class="page-header">
@@ -394,6 +110,18 @@
 let allTasks = [];
 let currentEditingTaskId = null;
 
+// UI <-> API Status mapping (Frontend uses EN, Backend expects TR)
+const UI_TO_API_STATUS = {
+    PENDING: 'YAPILACAK',
+    IN_PROGRESS: 'DEVAM_EDIYOR',
+    COMPLETED: 'BITTI'
+};
+const API_TO_UI_STATUS = {
+    YAPILACAK: 'PENDING',
+    DEVAM_EDIYOR: 'IN_PROGRESS',
+    BITTI: 'COMPLETED'
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // Token kontrolü
     const token = localStorage.getItem('authToken');
@@ -423,6 +151,11 @@ async function loadTasks() {
         
         if (response.ok) {
             allTasks = await response.json();
+            // Convert API status (TR) to UI status (EN) for rendering/filtering
+            allTasks = allTasks.map(t => ({
+                ...t,
+                status: API_TO_UI_STATUS[t.status] || t.status
+            }));
             displayTasks(allTasks);
         } else if (response.status === 401 || response.status === 403) {
             localStorage.removeItem('authToken');
@@ -458,15 +191,25 @@ function displayTasks(tasks) {
             <h3 class="task-title">${escapeHtml(task.title)}</h3>
             <p class="task-description">${escapeHtml(task.description || 'Açıklama yok')}</p>
             <div class="task-meta">
-                <span class="status-badge status-${task.status.toLowerCase()}">${getStatusText(task.status)}</span>
-                <span class="priority-badge priority-${task.priority.toLowerCase()}">${getPriorityText(task.priority)}</span>
+            <span class="status-badge status-${task.status.toLowerCase()}">${getStatusText(task.status)}</span>
+            <span class="priority-badge priority-${task.priority.toLowerCase()}">${getPriorityText(task.priority)}</span>
             </div>
             <div class="task-actions">
-                <button class="btn btn-primary btn-sm" onclick="editTask(${task.id})">✏️ Düzenle</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">🗑️ Sil</button>
+            <button class="btn btn-primary btn-sm" onclick="editTask(${task.id})">✏️ Düzenle</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">🗑️ Sil</button>
+            </div>
+
+            <div class="task-actions" style="margin-top:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="toggleAssignments(${task.id})">👥 Atamalar</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleComments(${task.id})">💬 Yorumlar</button>
+            </div>
+
+            <div id="details-${task.id}" class="task-details" style="display:none; margin-top:10px;">
+            <div id="assignments-${task.id}" class="card" style="margin-bottom:8px;"></div>
+            <div id="comments-${task.id}" class="card"></div>
             </div>
         </div>
-    `).join('');
+        `).join('');
 }
 
 // Task oluştur/düzenle modal'ını aç
@@ -506,6 +249,9 @@ async function handleTaskSubmit(e) {
         status: document.getElementById('taskStatus').value,
         priority: document.getElementById('taskPriority').value
     };
+
+    // Convert UI status (EN) to API status (TR) before sending
+    taskData.status = UI_TO_API_STATUS[taskData.status] || taskData.status;
     
     const submitButton = document.querySelector('#taskForm button[type="submit"]');
     const originalText = submitButton.textContent;
@@ -526,6 +272,15 @@ async function handleTaskSubmit(e) {
             });
         } else {
             // Create task
+            // Provide ownerId as required by backend DTO
+            try {
+                const session = window.Auth ? Auth.ensureAuthenticated() : null;
+                if (session && session.userId) {
+                    taskData.ownerId = session.userId;
+                }
+            } catch (e) {
+                console.warn('Auth not available for ownerId extraction', e);
+            }
             response = await fetch('/api/tasks', {
                 method: 'POST',
                 headers: {
@@ -632,6 +387,238 @@ function escapeHtml(text) {
 function showNotification(message, type) {
     // Basit notification - daha sonra geliştirebiliriz
     alert(message);
+}
+
+// ============== Assignments (Görev Atamaları) ==============
+// API yardımcıları
+async function fetchAssignments(taskId) {
+    const res = await (window.Auth ? Auth.authFetch(`/api/task-assignments/task/${taskId}`) : fetch(`/api/task-assignments/task/${taskId}`));
+    return res.ok ? res.json() : [];
+}
+async function assignTask(taskId, assignedToId, message) {
+    const body = JSON.stringify({ taskId, assignedToId, message });
+    return window.Auth
+        ? Auth.authFetch(`/api/task-assignments`, { method: 'POST', body })
+        : fetch(`/api/task-assignments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+}
+async function respondAssignment(assignmentId, response, message) {
+    const body = JSON.stringify({ response, message });
+    return window.Auth
+        ? Auth.authFetch(`/api/task-assignments/${assignmentId}/respond`, { method: 'PUT', body })
+        : fetch(`/api/task-assignments/${assignmentId}/respond`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body });
+}
+
+// Panel aç/kapat
+async function toggleAssignments(taskId) {
+    const panel = document.getElementById(`details-${taskId}`);
+    const assignmentsBox = document.getElementById(`assignments-${taskId}`);
+    const commentsBox = document.getElementById(`comments-${taskId}`);
+    if (!panel || !assignmentsBox || !commentsBox) return;
+
+    // Aç ve sadece atamaları göster
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+        assignmentsBox.style.display = 'block';
+        commentsBox.style.display = 'none';
+        await renderAssignments(taskId);
+        return;
+    }
+
+    // Panel açık: atamalar açık ise kapat, değilse atamaları göster (yorumları gizle)
+    const isAssignmentsVisible = assignmentsBox.style.display !== 'none';
+    if (isAssignmentsVisible) {
+        panel.style.display = 'none';
+        assignmentsBox.style.display = 'none';
+    } else {
+        assignmentsBox.style.display = 'block';
+        commentsBox.style.display = 'none';
+        await renderAssignments(taskId);
+    }
+}
+
+// Render
+async function renderAssignments(taskId) {
+    const container = document.getElementById(`assignments-${taskId}`);
+    if (!container) return;
+    container.innerHTML = 'Yükleniyor...';
+
+    const assignments = await fetchAssignments(taskId);
+    const session = window.Auth ? Auth.ensureAuthenticated() : null;
+    const me = session?.userId;
+    const myRole = session?.role;
+
+    const listHtml = assignments.map(a => {
+        const isPending = a.status === 'PENDING' || a.status === 'BEKLEMEDE' || a.status === 'PENDING'.toUpperCase();
+        const iAmAssignee = a.assignedToId === me;
+        const actions = (isPending && iAmAssignee)
+            ? `<div style="margin-top:6px;">
+                 <button class="btn btn-primary btn-sm" onclick="respondAssignmentUI(${a.id}, 'ACCEPTED', ${taskId})">✅ Kabul</button>
+                 <button class="btn btn-danger btn-sm" onclick="respondAssignmentUI(${a.id}, 'REJECTED', ${taskId})">❌ Reddet</button>
+               </div>`
+            : '';
+
+        return `
+          <div style="border-bottom:1px solid #eee; padding:8px 0;">
+            <div><b>#${a.id}</b> • ${escapeHtml(a.taskTitle || '')} • ${escapeHtml(String(a.status))}</div>
+            <div>Atayan: ${escapeHtml(a.assignedByName || '')} → Atanan: ${escapeHtml(a.assignedToName || '')}</div>
+            ${a.message ? `<div class="muted">Mesaj: ${escapeHtml(a.message)}</div>` : ''}
+            ${actions}
+          </div>`;
+    }).join('') || '<div class="muted">Atama yok</div>';
+
+    const assignForm = (myRole === 'ADMIN' || myRole === 'MANAGER')
+        ? `
+          <div style="margin-top:10px;">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap;">
+              <input id="assignTo-${taskId}" type="number" placeholder="Kullanıcı ID" style="width:140px;"/>
+              <input id="assignMsg-${taskId}" type="text" placeholder="Mesaj (opsiyonel)" style="flex:1; min-width:180px;"/>
+              <button class="btn btn-primary btn-sm" onclick="submitAssignmentUI(${taskId})">➕ Ata</button>
+            </div>
+          </div>
+        ` : '';
+
+    container.innerHTML = `
+      <div style="font-weight:600; margin-bottom:6px;">Atamalar</div>
+      ${listHtml}
+      ${assignForm}
+    `;
+}
+
+async function submitAssignmentUI(taskId) {
+    const assignedToId = Number(document.getElementById(`assignTo-${taskId}`).value);
+    const message = document.getElementById(`assignMsg-${taskId}`).value.trim();
+    if (!assignedToId) {
+        showNotification('Atanacak kullanıcı ID zorunlu', 'error');
+        return;
+    }
+    const res = await assignTask(taskId, assignedToId, message);
+    if (res.ok) {
+        showNotification('Atama yapıldı', 'success');
+        await renderAssignments(taskId);
+    } else {
+        showNotification('Atama yapılamadı', 'error');
+    }
+}
+
+async function respondAssignmentUI(assignmentId, response, taskId) {
+    const message = prompt('Opsiyonel mesaj (boş bırakabilirsiniz):') || '';
+    const res = await respondAssignment(assignmentId, response, message);
+    if (res.ok) {
+        showNotification(`Atama ${response === 'ACCEPTED' ? 'kabul edildi' : 'reddedildi'}`, 'success');
+        await renderAssignments(taskId);
+    } else {
+        showNotification('Yanıt gönderilemedi', 'error');
+    }
+}
+
+// ============== Comments (Görev Yorumları) ==============
+// API yardımcıları
+async function fetchComments(taskId) {
+    const res = await (window.Auth ? Auth.authFetch(`/api/task-comments/task/${taskId}`) : fetch(`/api/task-comments/task/${taskId}`));
+    return res.ok ? res.json() : [];
+}
+async function addComment(taskId, comment) {
+    const body = JSON.stringify({ taskId, comment });
+    return window.Auth
+        ? Auth.authFetch(`/api/task-comments`, { method: 'POST', body })
+        : fetch(`/api/task-comments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+}
+async function deleteComment(commentId) {
+    return window.Auth
+        ? Auth.authFetch(`/api/task-comments/${commentId}`, { method: 'DELETE' })
+        : fetch(`/api/task-comments/${commentId}`, { method: 'DELETE' });
+}
+
+// Panel aç/kapat
+async function toggleComments(taskId) {
+    const panel = document.getElementById(`details-${taskId}`);
+    const assignmentsBox = document.getElementById(`assignments-${taskId}`);
+    const commentsBox = document.getElementById(`comments-${taskId}`);
+    if (!panel || !assignmentsBox || !commentsBox) return;
+
+    // Aç ve sadece yorumları göster
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+        assignmentsBox.style.display = 'none';
+        commentsBox.style.display = 'block';
+        await renderComments(taskId);
+        return;
+    }
+
+    // Panel açık: yorumlar açık ise kapat, değilse yorumları göster (atamaları gizle)
+    const isCommentsVisible = commentsBox.style.display !== 'none';
+    if (isCommentsVisible) {
+        panel.style.display = 'none';
+        commentsBox.style.display = 'none';
+    } else {
+        assignmentsBox.style.display = 'none';
+        commentsBox.style.display = 'block';
+        await renderComments(taskId);
+    }
+}
+
+// Render
+async function renderComments(taskId) {
+    const container = document.getElementById(`comments-${taskId}`);
+    if (!container) return;
+    container.innerHTML = 'Yükleniyor...';
+
+    const comments = await fetchComments(taskId);
+    const session = window.Auth ? Auth.ensureAuthenticated() : null;
+    const me = session?.userId;
+    const myRole = session?.role;
+
+    const listHtml = comments.map(c => {
+        const canDelete = (c.user?.id === me) || (myRole === 'ADMIN' || myRole === 'MANAGER');
+        const delBtn = canDelete
+            ? `<button class="btn btn-danger btn-sm" style="margin-left:8px;" onclick="deleteCommentUI(${c.id}, ${taskId})">🗑️ Sil</button>`
+            : '';
+        return `
+          <div style="border-bottom:1px solid #eee; padding:8px 0;">
+            <div><b>${escapeHtml(c.user?.email || 'Kullanıcı')}</b> • <span class="muted">${escapeHtml(c.taskTitle || '')}</span></div>
+            <div>${escapeHtml(c.comment || '')}</div>
+            <div class="muted" style="font-size:12px;">${escapeHtml(c.createdAt || '')}</div>
+            ${delBtn}
+          </div>`;
+    }).join('') || '<div class="muted">Yorum yok</div>';
+
+    container.innerHTML = `
+      <div style="font-weight:600; margin-bottom:6px;">Yorumlar</div>
+      ${listHtml}
+      <div style="display:flex; gap:8px; align-items:center; margin-top:10px;">
+        <input id="newComment-${taskId}" type="text" placeholder="Yorum yazın..." style="flex:1; min-width:220px;"/>
+        <button class="btn btn-primary btn-sm" onclick="addCommentUI(${taskId})">➕ Ekle</button>
+      </div>
+    `;
+}
+
+async function addCommentUI(taskId) {
+    const input = document.getElementById(`newComment-${taskId}`);
+    const comment = (input.value || '').trim();
+    if (!comment) {
+        showNotification('Yorum boş olamaz', 'error');
+        return;
+    }
+    const res = await addComment(taskId, comment);
+    if (res.ok) {
+        input.value = '';
+        showNotification('Yorum eklendi', 'success');
+        await renderComments(taskId);
+    } else {
+        showNotification('Yorum eklenemedi (yetki/validasyon)', 'error');
+    }
+}
+
+async function deleteCommentUI(commentId, taskId) {
+    const ok = confirm('Yorumu silmek istiyor musunuz?');
+    if (!ok) return;
+    const res = await deleteComment(commentId);
+    if (res.ok) {
+        showNotification('Yorum silindi', 'success');
+        await renderComments(taskId);
+    } else {
+        showNotification('Yorum silinemedi', 'error');
+    }
 }
 
 function logout() {

@@ -1,5 +1,6 @@
 package com.example.Login_System2.api.controller;
 
+import com.example.Login_System2.api.dto.UserResponse;
 import com.example.Login_System2.api.dto.AuthDto.LoginRequest;
 import com.example.Login_System2.api.dto.AuthDto.RegisterRequest;
 import com.example.Login_System2.application.usecase.UserUseCase;
@@ -11,6 +12,7 @@ import com.example.Login_System2.infrastructure.Service.Jwtutil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -54,6 +56,33 @@ public class AuthController {
         return userUseCase.login(email, password)
             .map(token -> ResponseEntity.ok(Map.of("token", token, "message", "Login successful")))
             .orElseGet(() -> ResponseEntity.badRequest().body(Map.of("message", "Invalid credentials")));
+    }
+
+    @GetMapping("/users")
+    @Operation(summary = "Kullanıcıları listele (ADMIN)")
+    public ResponseEntity<?> listUsers(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        String role = jwtUtil.extractUserRole(token);
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+
+        List<User> users = userUseCase.listAllUsers(role);
+        List<UserResponse> responses = users.stream()
+            .map(u -> new UserResponse(u.getId(), u.getEmail(), u.getRole().toString()))
+            .toList();
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/users/{id}")
+    @Operation(summary = "Kullanıcı getir (ADMIN)")
+    public ResponseEntity<?> getUser(@PathVariable int id,
+                                    @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        String role = jwtUtil.extractUserRole(token);
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+
+        return userUseCase.getUserById(role, id)
+            .map(u -> ResponseEntity.ok(new UserResponse(u.getId(), u.getEmail(), u.getRole().toString())))
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/users/{id}")

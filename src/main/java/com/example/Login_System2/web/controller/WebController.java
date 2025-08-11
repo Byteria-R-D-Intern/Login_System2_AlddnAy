@@ -118,6 +118,11 @@ public class WebController {
         return "redirect:/register";
     }
 
+    @GetMapping("/admin")
+    public String adminPage() {
+        return "admin";
+    }
+
     /**
      * Dashboard sayfası
      */

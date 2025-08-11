@@ -1,621 +1,313 @@
-<!doctype html>
-<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<!DOCTYPE html>
+<html lang="tr">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Profil - Eğitim Platformu</title>
-    <style>
-        body {
-            font-family: 'Cambria', 'Hoefler Text', 'Liberation Serif', Times, 'Times New Roman', serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        
-        .page-container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #f1f3f4;
-            padding-bottom: 20px;
-        }
-        
-        .page-title {
-            color: #2c3e50;
-            margin: 0;
-            font-size: 28px;
-        }
-        
-        .header-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-            color: white;
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .profile-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-        
-        .profile-card {
-            background: #f8f9fa;
-            border: 2px solid #dee2e6;
-            border-radius: 15px;
-            padding: 30px;
-        }
-        
-        .card-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin: 0 0 20px 0;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 10px;
-        }
-        
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .info-row:last-child {
-            border-bottom: none;
-        }
-        
-        .info-label {
-            font-weight: bold;
-            color: #6c757d;
-            min-width: 100px;
-        }
-        
-        .info-value {
-            color: #2c3e50;
-            font-weight: 600;
-        }
-        
-        .role-badge {
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .role-user { background: #cce5ff; color: #004085; }
-        .role-manager { background: #fff3cd; color: #856404; }
-        .role-admin { background: #f8d7da; color: #721c24; }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 16px;
-            box-sizing: border-box;
-            transition: border-color 0.3s ease;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #6c757d;
-            box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.1);
-        }
-        
-        .form-control:disabled {
-            background-color: #e9ecef;
-            color: #6c757d;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-        
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 4px solid #28a745;
-        }
-        
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 4px solid #dc3545;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .stat-item {
-            text-align: center;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #dee2e6;
-        }
-        
-        .stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .profile-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .info-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 5px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profil</title>
+
+  <link rel="stylesheet" href="/css/app.css" />
+
+    <script src="/js/auth.js" defer></script>
+
 </head>
 <body>
-
-<div class="page-container">
-    <div class="page-header">
-        <h1 class="page-title">👤 Profilim</h1>
-        <div class="header-buttons">
-            <a href="/tasks" class="btn btn-primary">📋 Görevlerim</a>
-            <a href="/dashboard" class="btn btn-primary">🏠 Dashboard</a>
-            <button class="btn btn-danger" onclick="logout()">🚪 Çıkış</button>
+  <div class="container">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="title">Profil Bilgilerim</div>
+          <div class="muted">Adres, telefon ve doğum tarihi bilgilerinizi görüntüleyin ve güncelleyin.</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary" id="btnBack">← Geri (Dashboard)</button>
+          <button class="btn btn-danger" id="btnLogout">Çıkış</button>
+        </div>
         </div>
     </div>
     
-    <!-- Loading -->
-    <div id="loadingMessage" class="loading">
-        <h3>⏳ Profil bilgileri yükleniyor...</h3>
+    <!-- Mesaj alanı -->
+    <div id="profileMessage" class="message hidden"></div>
+
+    <!-- Yükleniyor -->
+    <div id="loading" class="card">
+      Yükleniyor...
     </div>
     
-    <!-- Messages -->
-    <div id="successMessage" class="success-message" style="display: none;"></div>
-    <div id="errorMessage" class="error-message" style="display: none;"></div>
-    
-    <!-- Profile Content -->
-    <div id="profileContent" class="profile-grid" style="display: none;">
-        <!-- User Info Card -->
-        <div class="profile-card">
-            <h2 class="card-title">📋 Kullanıcı Bilgileri</h2>
-            <div id="userInfo">
-                <!-- User info will be loaded here -->
+    <!-- Profil görüntüleme kartı -->
+    <div id="profileView" class="card hidden">
+      <div class="row">
+        <div class="field">
+          <label>Kullanıcı ID</label>
+          <input id="viewUserId" type="text" disabled />
+        </div>
+        <div class="field">
+          <label>Doğum Tarihi</label>
+          <input id="viewBirthDate" type="text" disabled />
             </div>
-            
-            <!-- User Stats -->
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number" id="totalTasks">0</div>
-                    <div class="stat-label">Toplam Görev</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="completedTasks">0</div>
-                    <div class="stat-label">Tamamlanan</div>
+      <div class="row">
+        <div class="field">
+          <label>Telefon</label>
+          <input id="viewTelefon" type="text" disabled />
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="pendingTasks">0</div>
-                    <div class="stat-label">Bekleyen</div>
+        <div class="field">
+          <label>Adres</label>
+          <textarea id="viewAdres" rows="3" disabled></textarea>
                 </div>
+            </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btnEdit">Profili Düzenle</button>
             </div>
         </div>
         
-        <!-- Edit Profile Card -->
-        <div class="profile-card">
-            <h2 class="card-title">✏️ Profil Düzenle</h2>
+    <!-- Profil düzenleme/oluşturma formu -->
+    <div id="profileFormCard" class="card hidden">
             <form id="profileForm">
-                <div class="form-group">
-                    <label for="editEmail">📧 E-posta</label>
-                    <input type="email" id="editEmail" class="form-control" required>
+        <div class="row">
+          <div class="field">
+            <label>Doğum Tarihi</label>
+            <input id="birthDate" name="birthDate" type="date" />
                 </div>
-                <div class="form-group">
-                    <label for="editName">👤 Ad</label>
-                    <input type="text" id="editName" class="form-control" required>
+          <div class="field">
+            <label>Telefon</label>
+            <input id="telefon" name="telefon" type="text" placeholder="+90..." />
                 </div>
-                <div class="form-group">
-                    <label for="editSurname">👤 Soyad</label>
-                    <input type="text" id="editSurname" class="form-control" required>
                 </div>
-                <div class="form-group">
-                    <label for="editRole">🎭 Rol</label>
-                    <input type="text" id="editRole" class="form-control" disabled>
+        <div class="field" style="margin-top: 8px;">
+          <label>Adres</label>
+          <textarea id="adres" name="adres" rows="3" placeholder="Adresiniz..."></textarea>
                 </div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-success" style="width: 100%;">💾 Profili Güncelle</button>
-                </div>
-            </form>
-            
-            <!-- Password Change -->
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
-                <h3 style="color: #2c3e50; margin-bottom: 15px;">🔒 Şifre Değiştir</h3>
-                <form id="passwordForm">
-                    <div class="form-group">
-                        <label for="currentPassword">🔐 Mevcut Şifre</label>
-                        <input type="password" id="currentPassword" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="newPassword">🔑 Yeni Şifre</label>
-                        <input type="password" id="newPassword" class="form-control" required minlength="8">
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmPassword">🔑 Yeni Şifre (Tekrar)</label>
-                        <input type="password" id="confirmPassword" class="form-control" required minlength="8">
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">🔄 Şifre Değiştir</button>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit" id="btnSave">Kaydet</button>
+          <button class="btn btn-secondary" type="button" id="btnCancel">İptal</button>
                     </div>
                 </form>
             </div>
+
+    <!-- Profil yoksa oluşturma çağrısı -->
+    <div id="profileCreateHint" class="card hidden">
+      <div class="muted">Profil bulunamadı. Aşağıdaki formdan profil oluşturabilirsiniz.</div>
+      <div class="actions" style="margin-top: 8px;">
+        <button class="btn btn-primary" id="btnCreateStart">Profil Oluştur</button>
         </div>
     </div>
 </div>
 
+
 <script>
-let currentUser = null;
-let userStats = null;
 
-// JWT token'dan user ID çıkar
-function getUserIdFromToken(token) {
-    try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        
-        const payload = JSON.parse(jsonPayload);
-        return payload.sub; // JWT'de user ID 'sub' field'ında
-    } catch (error) {
-        console.error('Token decode hatası:', error);
-        return null;
-    }
-}
+    let currentProfile = null;
+    let isEditing = false;
+    let isCreating = false;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Token kontrolü
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-    
-    // Profile bilgilerini yükle
-    loadProfile();
-    
-    // Form submit handlers
-    document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
-    document.getElementById('passwordForm').addEventListener('submit', handlePasswordChange);
-});
-
-// Profile bilgilerini yükle
-async function loadProfile() {
-    const token = localStorage.getItem('authToken');
-    
-    try {
-        // Token'dan user ID çıkar
-        const userId = getUserIdFromToken(token);
-        if (!userId) {
-            console.error('Token\'dan user ID çıkarılamadı');
-            window.location.href = '/login';
-            return;
-        }
-        
-        // User profile bilgilerini çek
-        const [profileResponse, statsResponse] = await Promise.all([
-            fetch(`/api/user/profile/${userId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            }),
-            fetch('/api/tasks', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-        ]);
-        
-        if (profileResponse.ok && statsResponse.ok) {
-            currentUser = await profileResponse.json();
-            const tasks = await statsResponse.json();
-            
-            // Stats hesapla
-            userStats = {
-                total: tasks.length,
-                completed: tasks.filter(t => t.status === 'COMPLETED').length,
-                pending: tasks.filter(t => t.status === 'PENDING').length
-            };
-            
-            displayProfile();
-        } else if (profileResponse.status === 401 || profileResponse.status === 403) {
-            localStorage.removeItem('authToken');
-            window.location.href = '/login';
-        } else {
-            throw new Error('Profile bilgileri yüklenemedi');
-        }
-    } catch (error) {
-        console.error('Error loading profile:', error);
-        document.getElementById('loadingMessage').innerHTML = 
-            '<h3>❌ Profil bilgileri yüklenirken hata oluştu</h3><p>Lütfen sayfayı yenileyin.</p>';
-    }
-}
-
-// Profile bilgilerini ekranda göster
-function displayProfile() {
-    document.getElementById('loadingMessage').style.display = 'none';
-    document.getElementById('profileContent').style.display = 'grid';
-    
-    // User Info
-    const userInfoHtml = `
-        <div class="info-row">
-            <span class="info-label">📧 E-posta:</span>
-            <span class="info-value">${escapeHtml(currentUser.email || 'Belirtilmemiş')}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">👤 Ad Soyad:</span>
-            <span class="info-value">${escapeHtml((currentUser.name || '') + ' ' + (currentUser.surname || ''))}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">🎭 Rol:</span>
-            <span class="info-value">
-                <span class="role-badge role-${(currentUser.role || 'user').toLowerCase()}">${getRoleText(currentUser.role)}</span>
-            </span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">📅 Kayıt Tarihi:</span>
-            <span class="info-value">${formatDate(currentUser.createdAt || new Date())}</span>
-        </div>
-    `;
-    document.getElementById('userInfo').innerHTML = userInfoHtml;
-    
-    // Stats
-    document.getElementById('totalTasks').textContent = userStats.total;
-    document.getElementById('completedTasks').textContent = userStats.completed;
-    document.getElementById('pendingTasks').textContent = userStats.pending;
-    
-    // Edit form'u doldur
-    document.getElementById('editEmail').value = currentUser.email || '';
-    document.getElementById('editName').value = currentUser.name || '';
-    document.getElementById('editSurname').value = currentUser.surname || '';
-    document.getElementById('editRole').value = getRoleText(currentUser.role);
-}
-
-// Profile güncelleme
-async function handleProfileUpdate(e) {
-    e.preventDefault();
-    
-    const token = localStorage.getItem('authToken');
-    const profileData = {
-        email: document.getElementById('editEmail').value,
-        name: document.getElementById('editName').value,
-        surname: document.getElementById('editSurname').value
+    const el = {
+    msg: document.getElementById('profileMessage'),
+    loading: document.getElementById('loading'),
+    view: document.getElementById('profileView'),
+    formCard: document.getElementById('profileFormCard'),
+    form: document.getElementById('profileForm'),
+    createHint: document.getElementById('profileCreateHint'),
+    btnBack: document.getElementById('btnBack'),
+    btnLogout: document.getElementById('btnLogout'),
+    btnEdit: document.getElementById('btnEdit'),
+    btnCancel: document.getElementById('btnCancel'),
+    btnCreateStart: document.getElementById('btnCreateStart'),
+    viewUserId: document.getElementById('viewUserId'),
+    viewBirthDate: document.getElementById('viewBirthDate'),
+    viewTelefon: document.getElementById('viewTelefon'),
+    viewAdres: document.getElementById('viewAdres'),
+    birthDate: document.getElementById('birthDate'),
+    telefon: document.getElementById('telefon'),
+    adres: document.getElementById('adres'),
+    btnSave: document.getElementById('btnSave')
     };
-    
-    const submitButton = document.querySelector('#profileForm button[type="submit"]');
-    const originalText = submitButton.textContent;
-    submitButton.textContent = '⏳ Güncelleniyor...';
-    submitButton.disabled = true;
-    
-    try {
-        const response = await fetch(`/api/auth/users/${currentUser.id}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(profileData)
+
+    function showMessage(text, type) {
+    el.msg.textContent = text;
+    el.msg.classList.remove('hidden', 'success', 'error');
+    el.msg.classList.add(type);
+    }
+    function clearMessage() {
+    el.msg.classList.add('hidden');
+    el.msg.textContent = '';
+    }
+
+    function showOnly(section) {
+    [el.loading, el.view, el.formCard, el.createHint].forEach(s => s.classList.add('hidden'));
+    section.classList.remove('hidden');
+    }
+    function showLoading() { showOnly(el.loading); }
+    function showView() { showOnly(el.view); }
+    function showForm() { showOnly(el.formCard); }
+    function showCreateHint() { showOnly(el.createHint); }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const session = Auth.ensureAuthenticated();
+        if (!session) return;
+        const userId = session.userId;
+
+        el.btnBack.addEventListener('click', () => {
+            window.location.href = '/dashboard';
         });
-        
-        if (response.ok) {
-            const updatedToken = await response.text();
-            if (updatedToken) {
-                localStorage.setItem('authToken', updatedToken);
-                localStorage.setItem('userEmail', profileData.email);
-            }
-            showMessage('Profil başarıyla güncellendi!', 'success');
-            loadProfile(); // Refresh profile
-        } else {
-            throw new Error('Profil güncellenemedi');
-        }
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        showMessage('Profil güncellenirken hata oluştu!', 'error');
-    } finally {
-        submitButton.textContent = originalText;
-        submitButton.disabled = false;
-    }
-}
 
-// Şifre değiştirme
-async function handlePasswordChange(e) {
-    e.preventDefault();
-    
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
-    if (newPassword !== confirmPassword) {
-        showMessage('Yeni şifreler eşleşmiyor!', 'error');
-        return;
-    }
-    
-    if (newPassword.length < 8) {
-        showMessage('Yeni şifre en az 8 karakter olmalıdır!', 'error');
-        return;
-    }
-    
-    const token = localStorage.getItem('authToken');
-    const passwordData = {
-        email: currentUser.email,
-        name: currentUser.name,
-        surname: currentUser.surname,
-        password: newPassword
-    };
-    
-    const submitButton = document.querySelector('#passwordForm button[type="submit"]');
-    const originalText = submitButton.textContent;
-    submitButton.textContent = '⏳ Değiştiriliyor...';
-    submitButton.disabled = true;
-    
-    try {
-        const response = await fetch(`/api/auth/users/${currentUser.id}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(passwordData)
+        el.btnLogout.addEventListener('click', () => {
+            Auth.logout();
         });
-        
-        if (response.ok) {
-            const updatedToken = await response.text();
-            if (updatedToken) {
-                localStorage.setItem('authToken', updatedToken);
-            }
-            showMessage('Şifre başarıyla değiştirildi!', 'success');
-            document.getElementById('passwordForm').reset();
-        } else {
-            throw new Error('Şifre değiştirilemedi');
-        }
-    } catch (error) {
-        console.error('Error changing password:', error);
-        showMessage('Şifre değiştirilirken hata oluştu!', 'error');
-    } finally {
-        submitButton.textContent = originalText;
-        submitButton.disabled = false;
-    }
-}
 
-// Utility functions
-function getRoleText(role) {
-    const roleMap = {
-        'USER': '👨‍🎓 Öğrenci',
-        'MANAGER': '👔 Eğitmen',
-        'ADMIN': '👑 Yönetici'
-    };
-    return roleMap[role] || role;
-}
+        el.btnEdit.addEventListener('click', startEditMode);
+        el.btnCreateStart.addEventListener('click', startCreateMode);
+        el.btnCancel.addEventListener('click', cancelEditing);
+        el.form.addEventListener('submit', handleSave);
 
-function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString('tr-TR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+        await loadProfile(userId);
     });
-}
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+    async function loadProfile(userId) {
+        clearMessage();
+        showLoading();
 
-function showMessage(message, type) {
-    const successEl = document.getElementById('successMessage');
-    const errorEl = document.getElementById('errorMessage');
-    
-    // Hide both
-    successEl.style.display = 'none';
-    errorEl.style.display = 'none';
-    
-    // Show appropriate message
-    if (type === 'success') {
-        successEl.textContent = message;
-        successEl.style.display = 'block';
-        setTimeout(() => successEl.style.display = 'none', 5000);
-    } else {
-        errorEl.textContent = message;
-        errorEl.style.display = 'block';
-        setTimeout(() => errorEl.style.display = 'none', 5000);
+        try {
+            const response = await Auth.authFetch(`/api/user/profile/${userId}`);
+
+            if (response.ok) {
+            currentProfile = await response.json();
+            fillView(currentProfile);
+            isEditing = false;
+            isCreating = false;
+            showView();
+            } else if (response.status === 404) {
+            currentProfile = null;
+            showCreateHint();
+            } else if (response.status === 403) {
+            showMessage('Profil görüntüleme yetkiniz yok!', 'error');
+            showView();
+        } else {
+            showMessage('Profil yüklenemedi. Lütfen tekrar deneyin.', 'error');
+            showView();
+            }
+        } catch (err) {
+            console.error('Profil yükleme hatası:', err);
+            showMessage('Sunucu hatası. Lütfen tekrar deneyin.', 'error');
+            showView();
+        }
     }
-}
 
-function logout() {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole');
-    window.location.href = '/login';
-}
+    function fillView(profile) {
+        el.viewUserId.value = profile.userId ?? profile.id ?? '';
+        el.viewBirthDate.value = formatDateForDisplay(profile.birthDate);
+        el.viewTelefon.value = profile.telefon ?? '';
+        el.viewAdres.value = profile.adres ?? '';
+        }
+
+ 
+        function formatDateForDisplay(value) {
+        if (!value) return '';
+        if (typeof value === 'string') {
+
+            return value.substring(0, 10);
+        }
+        try {
+            const d = new Date(value);
+            if (isNaN(d.getTime())) return String(value);
+            return d.toISOString().substring(0, 10);
+        } catch {
+            return String(value);
+        }
+    }
+    function startEditMode() {
+        if (!currentProfile) return;
+        isEditing = true;
+        isCreating = false;
+        clearMessage();
+        fillForm(currentProfile);
+        showForm();
+    }
+
+    function startCreateMode() {
+        isEditing = false;
+        isCreating = true;
+        clearMessage();
+        clearForm();
+        showForm();
+    }
+
+    function cancelEditing() {
+        isEditing = false;
+        isCreating = false;
+        clearMessage();
+        if (currentProfile) showView();
+        else showCreateHint();
+    }
+
+    function fillForm(profile) {
+        el.birthDate.value = formatDateForDisplay(profile.birthDate);
+        el.telefon.value = profile.telefon ?? '';
+        el.adres.value = profile.adres ?? '';
+    }
+
+    function clearForm() {
+        el.birthDate.value = '';
+        el.telefon.value = '';
+        el.adres.value = '';
+    }
+
+    async function handleSave(e) {
+        e.preventDefault();
+        clearMessage();
+
+        const session = Auth.ensureAuthenticated();
+        if (!session) return;
+        const { userId } = session;
+
+        // Basit doğrulama (opsiyonel)
+        const payload = {
+            birthDate: el.birthDate.value || null,
+            telefon: (el.telefon.value || '').trim(),
+            adres: (el.adres.value || '').trim()
+        };
+        if (!payload.telefon && !payload.adres && !payload.birthDate) {
+            showMessage('Lütfen en az bir alanı doldurun.', 'error');
+        return;
+    }
+    
+        // UI: Kaydet butonunu kilitle
+        el.btnSave.disabled = true;
+        const originalText = el.btnSave.textContent;
+        el.btnSave.textContent = '⏳ Kaydediliyor...';
+
+        try {
+            const method = isEditing ? 'PUT' : 'POST';
+            const url = `/api/user/profile/${userId}`;
+
+            const response = await Auth.authFetch(url, {
+            method,
+            body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+            showMessage(isEditing ? 'Profil güncellendi.' : 'Profil oluşturuldu.', 'success');
+            isEditing = false;
+            isCreating = false;
+            await loadProfile(userId); // Görüntüyü tazele
+            } else if (response.status === 403) {
+            showMessage('Yetkiniz yok. Yalnızca kendi profilinizi yönetebilirsiniz.', 'error');
+            } else if (response.status === 400) {
+            showMessage('Geçersiz istek. Lütfen alanları kontrol edin.', 'error');
+        } else {
+            showMessage('İşlem başarısız. Lütfen tekrar deneyin.', 'error');
+            }
+        } catch (err) {
+            console.error('Profil kaydetme hatası:', err);
+            showMessage('Sunucu hatası. Lütfen tekrar deneyin.', 'error');
+    } finally {
+            el.btnSave.textContent = originalText;
+            el.btnSave.disabled = false;
+        }
+    }
+
 </script>
-
 </body>
 </html>

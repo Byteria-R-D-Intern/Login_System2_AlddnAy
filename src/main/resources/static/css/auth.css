@@ -1,0 +1,77 @@
+/* auth.css — Login ve Register sayfalarına özel stiller */
+
+body.auth-page {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-container { width: 100%; max-width: 600px; margin: 20px; }
+.login-card, .register-card {
+  background: rgba(255,255,255,.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.1);
+  text-align: center;
+  border: 1px solid rgba(200,200,200,.3);
+}
+
+.platform-header { margin-bottom: 30px; }
+.platform-title { font-size: 28px; color: #2c3e50; margin: 0 0 10px 0; font-weight: 700; }
+.platform-subtitle { font-size: 16px; color: #7f8c8d; margin: 0 0 30px 0; }
+
+.login-title, .register-title { font-size: 24px; color: #34495e; margin: 0 0 30px 0; font-weight: 600; }
+
+.role-selection { margin-bottom: 25px; text-align: left; }
+.role-label { display: block; margin-bottom: 15px; font-weight: 700; color: #2c3e50; font-size: 16px; }
+.role-options { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+.role-option { display: flex; align-items: center; background: #f8f9fa; padding: 12px 18px; border-radius: 12px; cursor: pointer; transition: .3s; border: 2px solid #e9ecef; min-width: 120px; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+.role-option:hover { background: #e9ecef; transform: translateY(-2px); border-color: #6c757d; }
+.role-option input[type="radio"] { margin-right: 8px; transform: scale(1.2); accent-color: #495057; }
+.role-option input[type="radio"]:checked + .role-text { color: #2c3e50; font-weight: 700; }
+.role-option:has(input[type="radio"]:checked) { background: #dee2e6; border-color: #495057; box-shadow: 0 4px 8px rgba(0,0,0,.1); }
+
+.form-group { margin-bottom: 20px; text-align: left; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 700; color: #2c3e50; font-size: 16px; }
+.form-input { width: 100%; padding: 15px; border: 2px solid #dee2e6; border-radius: 10px; font-size: 16px; transition: .3s; box-sizing: border-box; background: #f8f9fa; }
+.form-input:focus { outline: none; border-color: #6c757d; box-shadow: 0 0 0 3px rgba(108,117,125,.1); background: #fff; }
+.form-input::placeholder { color: #adb5bd; }
+
+.test-users-box { background: linear-gradient(135deg,#6c757d 0%,#495057 100%); color: #fff; border-radius: 15px; padding: 20px; margin: 25px 0; text-align: center; box-shadow: 0 8px 16px rgba(0,0,0,.15); }
+.test-users-title { margin: 0 0 15px 0; font-size: 18px; font-weight: 700; }
+.test-user-item { margin: 8px 0; font-size: 14px; opacity: .95; }
+
+.login-button, .register-button { width: 100%; padding: 18px; color: #fff; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; transition: .3s; margin-top: 10px; box-shadow: 0 4px 8px rgba(0,0,0,.1); }
+.login-button { background: linear-gradient(135deg,#6c757d 0%,#495057 100%); }
+.login-button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(108,117,125,.3); background: linear-gradient(135deg,#5a6268 0%,#343a40 100%); }
+.register-button { background: linear-gradient(135deg,#28a745 0%,#20c997 100%); }
+.register-button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(40,167,69,.3); background: linear-gradient(135deg,#218838 0%,#1ea976 100%); }
+.register-button:disabled { background: #6c757d; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.login-links, .register-links { margin-top: 25px; text-align: center; }
+.login-links p, .register-links p { margin: 8px 0; color: #6c757d; }
+.login-links a, .register-links a { color: #495057; text-decoration: none; font-weight: 700; transition: color .3s; }
+.login-links a:hover, .register-links a:hover { color: #343a40; text-decoration: underline; }
+
+.error-message { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #dc3545; text-align: center; }
+.success-message { background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #28a745; text-align: center; }
+
+/* Password strength */
+.password-strength { margin-top: 10px; height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden; }
+.password-strength-bar { height: 100%; transition: .3s; border-radius: 2px; }
+.strength-weak { background: #dc3545; width: 33%; }
+.strength-medium { background: #ffc107; width: 66%; }
+.strength-strong { background: #28a745; width: 100%; }
+
+@media (max-width: 600px) {
+  .main-container { margin: 10px; }
+  .login-card, .register-card { padding: 30px 20px; }
+  .role-options { flex-direction: column; gap: 10px; }
+  .role-option { min-width: auto; }
+}
+
+

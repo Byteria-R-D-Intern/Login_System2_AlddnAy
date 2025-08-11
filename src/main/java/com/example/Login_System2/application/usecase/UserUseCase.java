@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Optional;
 import com.example.Login_System2.domain.model.Role;
 import org.slf4j.Logger;
@@ -150,6 +151,15 @@ public class UserUseCase {
         return true;
     }
 
+    public List<User> listAllUsers(String requesterRole) {
+        if (!"ADMIN".equals(requesterRole)) return List.of();
+        return userRepository.findAll();
+    }
+    
+    public Optional<User> getUserById(String requesterRole, int userId) {
+        if (!"ADMIN".equals(requesterRole)) return Optional.empty();
+        return userRepository.findById(userId);
+    }
 
     //Validasyonlar için yardımcı metotlar
     private boolean isValidEmail(String email) {
@@ -162,6 +172,8 @@ public class UserUseCase {
                password.matches(".*[a-z].*") && 
                password.matches(".*\\d.*");
     }
+
+
 
     
 }

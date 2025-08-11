@@ -1,0 +1,44 @@
+/* app.css — genel bileşenler ve yardımcı sınıflar */
+:root { --bg: #f9fafb; --fg: #111827; --muted: #6b7280; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.container { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-weight: 600; color: #374151; }
+.field input, .field textarea, .form-control {
+  padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;
+}
+
+.actions { display: flex; gap: 12px; margin-top: 16px; }
+.btn { padding: 10px 14px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; font-weight: 600; }
+.btn-primary { background: #111827; color: #fff; }
+.btn-secondary { background: #f3f4f6; color: #111827; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.muted { color: var(--muted); font-size: 14px; }
+.hidden { display: none; }
+
+.title { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+.message { padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
+.message.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.message.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* Modal (genel) */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; }
+.modal-content {
+  background: #fff; margin: 50px auto; padding: 24px; border-radius: 12px;
+  max-width: 640px; width: 90%; max-height: 80vh; overflow-y: auto;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 12px; }
+.close { font-size: 26px; color: #9ca3af; cursor: pointer; }
+.close:hover { color: #111827; }
