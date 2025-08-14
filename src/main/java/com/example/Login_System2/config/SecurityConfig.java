@@ -36,6 +36,7 @@ public class SecurityConfig {
                     "/register",
                     "/login",
                     "/admin",
+                    "/manager",
                     "/dashboard",
                     "/tasks",
                     "/favicon.ico",         

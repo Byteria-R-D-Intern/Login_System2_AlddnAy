@@ -49,7 +49,7 @@
           <tbody></tbody>
         </table>
       </div>
-    </div>
+      </div>
 
     <!-- Profil Yönetimi -->
     <div id="profilesPanel" class="card hidden" style="margin-top:12px;">
@@ -77,7 +77,7 @@
           <tbody></tbody>
         </table>
       </div>
-    </div>
+      </div>
 
     <!-- Modal (genel) -->
     <div id="adminModal" class="modal">
@@ -181,8 +181,7 @@
         e.preventDefault();
         const payload = {
           email: document.getElementById('editEmail').value,
-          name: '',
-          surname: '',
+          // Mevcut değerleri bozmamak için name/surname göndermiyoruz
           role: document.getElementById('editRole').value
         };
         const res = await Auth.authFetch(`/api/auth/users/${id}`, {

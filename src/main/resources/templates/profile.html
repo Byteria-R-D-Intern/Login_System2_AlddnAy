@@ -178,12 +178,9 @@
             isEditing = false;
             isCreating = false;
             showView();
-            } else if (response.status === 404) {
+            } else if (response.status === 404 || response.status === 403) {
             currentProfile = null;
             showCreateHint();
-            } else if (response.status === 403) {
-            showMessage('Profil görüntüleme yetkiniz yok!', 'error');
-            showView();
         } else {
             showMessage('Profil yüklenemedi. Lütfen tekrar deneyin.', 'error');
             showView();

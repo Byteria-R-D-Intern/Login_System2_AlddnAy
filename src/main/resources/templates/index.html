@@ -7,6 +7,7 @@
     <title>Giriş - Eğitim Platformu</title>
     <link rel="stylesheet" href="/css/app.css">
     <link rel="stylesheet" href="/css/auth.css">
+    <script src="/js/auth.js" defer></script>
 </head>
 
 <script>
@@ -21,7 +22,7 @@
                 // Form verilerini al
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                const loginType = document.querySelector('input[name="loginType"]:checked').value;
+                // Rol seçimi UI'da gösterilse de sunucu belirler; kullanıcı seçimine güvenmeyiz
                 
                 // Loading state göster
                 const submitButton = document.querySelector('.login-button');
@@ -46,18 +47,32 @@
                         // Başarılı giriş
                         const data = await response.json();
                         
-                        // Token'ı localStorage'da sakla
+                        // Token'ı sakla ve rolu JWT'den belirle
                         localStorage.setItem('authToken', data.token);
                         localStorage.setItem('userEmail', email);
-                        localStorage.setItem('userRole', loginType);
+                        try {
+                            const roleFromToken = window.Auth?.getRoleFromToken(data.token) || null;
+                            if (roleFromToken) {
+                                localStorage.setItem('userRole', roleFromToken);
+                            } else {
+                                localStorage.removeItem('userRole');
+                            }
+                        } catch (e) {
+                            console.warn('Rol okunamadı, userRole temizleniyor:', e);
+                            localStorage.removeItem('userRole');
+                        }
                         
                         // Başarı mesajı göster
                         showMessage('Başarılı! Yönlendiriliyorsunuz...', 'success');
-                        
-                        // 1 saniye sonra dashboard'a yönlendir
-                        setTimeout(() => {
-                            window.location.href = '/dashboard';
-                        }, 1000);
+
+                        // Role göre hedef sayfayı belirle ve yönlendir
+                        let target = '/dashboard';
+                        try {
+                            const r = window.Auth?.getRoleFromToken(data.token) || null;
+                            if (r === 'ADMIN') target = '/admin';
+                            else if (r === 'MANAGER') target = '/manager';
+                        } catch(_) {}
+                        window.location.href = target;
                         
                     } else {
                         // Hata durumu
@@ -119,23 +134,6 @@
         <form th:action="@{/login}" method="post">
             
             <!-- Role Seçimi -->
-            <div class="role-selection">
-                <label class="role-label">👤 Giriş Türünüzü Seçin:</label>
-                <div class="role-options">
-                    <label class="role-option">
-                        <input type="radio" name="loginType" value="USER" checked>
-                        <span class="role-text">👨‍🎓 Öğrenci</span>
-                    </label>
-                    <label class="role-option">
-                        <input type="radio" name="loginType" value="MANAGER">
-                        <span class="role-text">👔 Eğitmen</span>
-                    </label>
-                    <label class="role-option">
-                        <input type="radio" name="loginType" value="ADMIN">
-                        <span class="role-text">👑 Yönetici</span>
-                    </label>
-                </div>
-            </div>
             
             <!-- Email input -->
             <div class="form-group">

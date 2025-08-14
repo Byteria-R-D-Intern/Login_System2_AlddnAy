@@ -107,17 +107,22 @@ public class UserUseCase {
         
         User user = userOpt.get();
     
-        // Email değişikliği kontrolü
-        if (!user.getEmail().equals(updateUser.getEmail())) {
+        // Email değişikliği kontrolü (boş/null değilse ve farklıysa güncelle)
+        if (updateUser.getEmail() != null && !updateUser.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(updateUser.getEmail())) {
                 log.warn("Email zaten kullanımda: {}", updateUser.getEmail());
                 return Optional.empty();
             }
             user.setEmail(updateUser.getEmail());
         }
-    
-        user.setName(updateUser.getName());
-        user.setSurname(updateUser.getSurname());
+
+        // İsim ve soyisim: null/blank gelirse mevcut değeri koru
+        if (updateUser.getName() != null && !updateUser.getName().trim().isEmpty()) {
+            user.setName(updateUser.getName());
+        }
+        if (updateUser.getSurname() != null && !updateUser.getSurname().trim().isEmpty()) {
+            user.setSurname(updateUser.getSurname());
+        }
     
         // Role güncelleme sadece ADMIN tarafından yapılabilir
         if (updateUser.getRole() != null && requesterRole.equals("ADMIN")) {

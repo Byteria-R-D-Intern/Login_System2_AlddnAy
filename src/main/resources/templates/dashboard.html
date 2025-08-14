@@ -49,14 +49,6 @@
             </p>
             <a href="/swagger-ui/index.html" class="card-btn" target="_blank">API'yi Keşfet</a>
         </div>
-        
-        <div class="dashboard-card" id="adminCard" style="display: none;">
-            <h3 class="card-title">👑 Yönetici Paneli</h3>
-            <p class="card-description">
-                Sistem yönetimi ve kullanıcı yönetimi işlemleri.
-            </p>
-            <a href="#" class="card-btn" onclick="openAdmin()">Yönetici Paneli</a>
-        </div>
     </div>
 </div>
 
@@ -65,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Token kontrolü
     const token = localStorage.getItem('authToken');
     const userEmail = localStorage.getItem('userEmail');
-    const userRole = localStorage.getItem('userRole');
     
     if (!token) {
         // Token yoksa login'e yönlendir
@@ -78,18 +69,31 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('welcomeMessage').textContent = `Hoş geldin, ${userEmail}`;
     }
     
-    if (userRole) {
-        const roleText = {
-            'USER': '👨‍🎓 Öğrenci',
-            'MANAGER': '👔 Eğitmen', 
-            'ADMIN': '👑 Yönetici'
-        };
-        document.getElementById('userRole').textContent = roleText[userRole] || userRole;
-        
-        // Admin kartını göster
-        if (userRole === 'ADMIN') {
-            document.getElementById('adminCard').style.display = 'block';
-        }
+    // Rolü JWT'den belirle ve UI/localStorage'a yaz
+    let resolvedRole = null;
+    try {
+        resolvedRole = window.Auth?.getRoleFromToken(token) || null;
+    } catch (e) {
+        console.warn('Role parse error:', e);
+    }
+    if (resolvedRole) {
+        localStorage.setItem('userRole', resolvedRole);
+    } else {
+        localStorage.removeItem('userRole');
+    }
+    const roleText = {
+        'USER': '👨‍🎓 Öğrenci',
+        'MANAGER': '👔 Eğitmen', 
+        'ADMIN': '👑 Yönetici'
+    };
+    document.getElementById('userRole').textContent = roleText[resolvedRole] || (resolvedRole || 'Kullanıcı');
+    if (resolvedRole === 'ADMIN') {
+        window.location.href = '/admin';
+        return;
+    }
+    if (resolvedRole === 'MANAGER') {
+        window.location.href = '/manager';
+        return;
     }
     
     // Başarı mesajını göster

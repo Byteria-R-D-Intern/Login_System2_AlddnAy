@@ -133,6 +133,14 @@ public class WebController {
     }
 
     /**
+     * Manager paneli sayfası (şimdilik basit placeholder)
+     */
+    @GetMapping("/manager")
+    public String managerPage() {
+        return "dashboard"; // İleride ayrı manager.html yapılabilir
+    }
+
+    /**
      * Görevler sayfası
      */
     @GetMapping("/tasks")
