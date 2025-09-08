@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 
 @Configuration
 @EnableWebSecurity
@@ -36,6 +37,7 @@ public class SecurityConfig {
                     "/register",
                     "/login",
                     "/admin",
+                    "/admin/logs",
                     "/manager",
                     "/dashboard",
                     "/tasks",
@@ -49,10 +51,28 @@ public class SecurityConfig {
                 .requestMatchers("/api/user/profile/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                 .requestMatchers("/api/task-assignments/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                 .requestMatchers("/api/task-comments/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                .requestMatchers("/api/notifications/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                .requestMatchers("/api/task-logs/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                 .requestMatchers("/api/auth/users/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        
+        // Security headers (CSP, Frame, Referrer, Permissions)
+        http.headers(h -> h
+            .contentSecurityPolicy(csp -> csp.policyDirectives(
+                "default-src 'self'; " +
+                "img-src 'self' data:; " +
+                "script-src 'self' 'unsafe-inline'; " +
+                "style-src 'self' 'unsafe-inline'; " +
+                "base-uri 'self'; " +
+                "object-src 'none'; " +
+                "frame-ancestors 'none'"
+            ))
+            .frameOptions(frame -> frame.deny())
+            .referrerPolicy(ref -> ref.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
+            .addHeaderWriter(new StaticHeadersWriter("Permissions-Policy", "geolocation=(), camera=(), microphone=()"))
+        );
         
         return http.build();
     }

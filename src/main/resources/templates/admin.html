@@ -21,6 +21,7 @@
     <div class="actions" style="justify-content:flex-start; gap:8px;">
       <button class="btn btn-primary" id="tabUsers">👥 Kullanıcılar</button>
       <button class="btn btn-secondary" id="tabProfiles">🗂️ Profiller</button>
+      <button class="btn btn-secondary" id="tabLogs">📜 Loglar</button>
       <a href="/tasks" class="btn btn-secondary">📋 Görevler</a>
       <a href="/swagger-ui/index.html" target="_blank" class="btn btn-secondary">📚 Swagger</a>
     </div>
@@ -29,10 +30,8 @@
     <div id="usersPanel" class="card" style="margin-top:12px;">
       <div class="title">Kullanıcı Yönetimi</div>
       <div class="actions" style="justify-content:space-between;">
-        <div class="muted">Listeyi görmek için yükleyin.</div>
-        <div>
-          <button class="btn btn-primary" id="btnLoadUsers">Yükle</button>
-        </div>
+        <div class="muted">Kullanıcı listesi</div>
+        <div></div>
       </div>
       <div id="usersLoading" class="muted hidden" style="margin-top:8px;">Yükleniyor...</div>
       <div id="usersEmpty" class="muted hidden" style="margin-top:8px;">Kullanıcı bulunamadı</div>
@@ -55,11 +54,36 @@
     <div id="profilesPanel" class="card hidden" style="margin-top:12px;">
       <div class="title">Profil Yönetimi</div>
       <div class="actions" style="justify-content:space-between;">
-        <div class="muted">Listeyi görmek için yükleyin.</div>
-        <div>
-          <button class="btn btn-primary" id="btnLoadProfiles">Yükle</button>
-        </div>
+        <div class="muted">Profil listesi</div>
+        <div></div>
       </div>
+
+    <!-- Loglar (Admin) -->
+    <div id="logsPanel" class="card hidden" style="margin-top:12px;">
+      <div class="title">Sistem Logları</div>
+      <div class="actions" style="justify-content:space-between;">
+        <div class="muted">Son loglar</div>
+        <div></div>
+      </div>
+      <div id="logsLoading" class="muted hidden" style="margin-top:8px;">Yükleniyor...</div>
+      <div id="logsEmpty" class="muted hidden" style="margin-top:8px;">Log bulunamadı</div>
+      <div style="overflow:auto;">
+        <table id="logsTable" class="table" style="width:100%; border-collapse:collapse; margin-top:8px;">
+          <thead>
+            <tr style="text-align:left;">
+              <th>ID</th>
+              <th>Zaman</th>
+              <th>Task</th>
+              <th>Actor</th>
+              <th>Target</th>
+              <th>Aksiyon</th>
+              <th>Mesaj</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
       <div id="profilesLoading" class="muted hidden" style="margin-top:8px;">Yükleniyor...</div>
       <div id="profilesEmpty" class="muted hidden" style="margin-top:8px;">Profil bulunamadı</div>
       <div style="overflow:auto;">
@@ -110,23 +134,25 @@
       // Sekme butonları
       document.getElementById('tabUsers').addEventListener('click', () => showPanel('users'));
       document.getElementById('tabProfiles').addEventListener('click', () => showPanel('profiles'));
-      document.getElementById('btnLoadUsers').addEventListener('click', loadUsers);
-      document.getElementById('btnLoadProfiles').addEventListener('click', loadProfiles);
+      document.getElementById('tabLogs').addEventListener('click', () => showPanel('logs'));
 
-      // Varsayılan: kullanıcılar paneli
+      // Varsayılan: kullanıcılar paneli + verileri yükle
       showPanel('users');
+      loadUsers();
+      loadProfiles();
+      loadLogs();
     });
 
     function showPanel(which) {
       const usersPanel = document.getElementById('usersPanel');
       const profilesPanel = document.getElementById('profilesPanel');
-      if (which === 'users') {
-        usersPanel.classList.remove('hidden');
-        profilesPanel.classList.add('hidden');
-      } else {
-        profilesPanel.classList.remove('hidden');
-        usersPanel.classList.add('hidden');
-      }
+      const logsPanel = document.getElementById('logsPanel');
+      usersPanel.classList.add('hidden');
+      profilesPanel.classList.add('hidden');
+      logsPanel.classList.add('hidden');
+      if (which === 'users') usersPanel.classList.remove('hidden');
+      if (which === 'profiles') profilesPanel.classList.remove('hidden');
+      if (which === 'logs') logsPanel.classList.remove('hidden');
     };
 
     // ------- Kullanıcılar -------
@@ -290,12 +316,41 @@
 
     // ------- UI helpers -------
     function toggleLoading(section, loading) {
-      const el = document.getElementById(section === 'users' ? 'usersLoading' : 'profilesLoading');
+      const el = document.getElementById(section === 'users' ? 'usersLoading' : section === 'profiles' ? 'profilesLoading' : 'logsLoading');
       if (loading) el.classList.remove('hidden'); else el.classList.add('hidden');
     }
     function toggleEmpty(section, isEmpty) {
-      const el = document.getElementById(section === 'users' ? 'usersEmpty' : 'profilesEmpty');
+      const el = document.getElementById(section === 'users' ? 'usersEmpty' : section === 'profiles' ? 'profilesEmpty' : 'logsEmpty');
       if (isEmpty) el.classList.remove('hidden'); else el.classList.add('hidden');
+    }
+    // ------- Loglar -------
+    async function loadLogs() {
+      toggleLoading('logs', true);
+      const res = await Auth.authFetch('/api/task-logs/all');
+      toggleLoading('logs', false);
+      if (!res.ok) { alert('Loglar yüklenemedi'); return; }
+      const logs = await res.json();
+      renderLogs(logs);
+    }
+
+    function renderLogs(logs) {
+      const tbody = document.querySelector('#logsTable tbody');
+      tbody.innerHTML = '';
+      if (!logs || logs.length === 0) { toggleEmpty('logs', true); return; }
+      toggleEmpty('logs', false);
+      logs.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${l.id}</td>
+          <td>${(l.createdAt || '').toString().substring(0,16).replace('T',' ')}</td>
+          <td>${l.task ? l.task.id : '-'}</td>
+          <td>${l.actor ? (l.actor.name || '') : '-'}</td>
+          <td>${l.target ? (l.target.name || '') : '-'}</td>
+          <td>${l.action}</td>
+          <td>${escapeHtml(l.message || '')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function escapeHtml(text) {

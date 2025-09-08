@@ -3,13 +3,12 @@ package com.example.Login_System2.application.usecase;
 import com.example.Login_System2.domain.model.Priority;
 import com.example.Login_System2.domain.model.Status;
 import com.example.Login_System2.domain.model.Task;
-import com.example.Login_System2.domain.model.TaskAssignment;
 import com.example.Login_System2.domain.port.TaskRepository;
-import com.example.Login_System2.domain.port.TaskAssignmentRepository;
 import com.example.Login_System2.domain.port.UserRepository;
 
-import com.example.Login_System2.domain.model.AssignmentStatus;
-import java.time.LocalDateTime;
+import com.example.Login_System2.domain.model.TaskLogAction;
+import com.example.Login_System2.domain.model.NotificationType;
+import com.example.Login_System2.domain.model.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -23,7 +22,9 @@ import org.slf4j.LoggerFactory;
 public class TaskUseCase {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
-    private final TaskAssignmentRepository taskAssignmentRepository;
+    // private final TaskAssignmentRepository taskAssignmentRepository; // no longer used for auto-assign
+    private final TaskLogUseCase taskLogUseCase;
+    private final NotificationUseCase notificationUseCase;
 
     private final Logger log = LoggerFactory.getLogger(TaskUseCase.class);
 
@@ -31,36 +32,29 @@ public class TaskUseCase {
         log.info("Görev oluşturma isteği: requesterId={}, requesterRole={}", requestId, requestRole);
         log.info("Task owner ID: {}", newTask.getOwner().getId());
     
-        if(requestRole.equals("USER") && requestId != newTask.getOwner().getId()){
-            log.warn("USER sadece kendi görevlerini oluşturabilir! requesterId={}, ownerId={}", requestId, newTask.getOwner().getId());
+        // Sadece ADMIN görev oluşturabilir
+        if (!"ADMIN".equals(requestRole)) {
+            log.warn("Sadece ADMIN görev oluşturabilir! requesterId={}, requesterRole={}", requestId, requestRole);
             return Optional.empty();
         }
     
-        if (userRepository.findById(newTask.getOwner().getId()).isEmpty()) {
+        Optional<User> ownerOpt = userRepository.findById(newTask.getOwner().getId());
+        if (ownerOpt.isEmpty()) {
             log.warn("Kullanıcı bulunamadı! ownerId={}", newTask.getOwner().getId());
             return Optional.empty();
         }
+        // Owner'ı yönetilen entity olarak set et (role vb. null olmasın)
+        newTask.setOwner(ownerOpt.get());
     
         // Önce task'i kaydet
         log.info("Görev oluşturuluyor... ownerId={}", newTask.getOwner().getId());
         Task savedTask = taskRepository.save(newTask);
         
-        // Task kaydedildikten sonra otomatik atama yap
-        TaskAssignment autoAssignment = new TaskAssignment();
-        autoAssignment.setTask(savedTask);
-        autoAssignment.setAssignedTo(savedTask.getOwner()); // Kendisine atama
-        autoAssignment.setAssignedBy(savedTask.getOwner()); // Kendisi atayan
-        autoAssignment.setStatus(AssignmentStatus.ACCEPTED); // Otomatik kabul
-        autoAssignment.setAssignedAt(LocalDateTime.now());
-        autoAssignment.setMessage("Görev sahibi tarafından otomatik atandı");
-    
-        taskAssignmentRepository.save(autoAssignment);
-    
-        // currentAssignee'yi de güncelle
-        savedTask.setCurrentAssignee(savedTask.getOwner());
-        taskRepository.save(savedTask);
+        // Otomatik atama kaldırıldı; görev atama bekler. currentAssignee null bırakılır.
         
         log.info("Görev başarıyla oluşturuldu! taskId={}", savedTask.getId());
+        // Log
+        taskLogUseCase.logAction(savedTask.getId(), requestId, TaskLogAction.CREATED, "Görev oluşturuldu");
         return Optional.of(savedTask);
     }
     public Optional<Task> getTask(int requestId, String requestRole, int taskId){
@@ -93,6 +87,8 @@ public class TaskUseCase {
         }
         
         Task existingTask = taskOpt.get();
+        Status oldStatus = existingTask.getStatus();
+        Priority oldPriority = existingTask.getPriority();
         
         // USER sadece kendi görevlerini güncelleyebilir
         if (requestRole.equals("USER") && requestId != existingTask.getOwner().getId()) {
@@ -107,6 +103,27 @@ public class TaskUseCase {
 
         Task savedTask = taskRepository.save(existingTask);
         log.info("Görev başarıyla güncellendi! taskId={}", taskId);
+        // Logs
+        taskLogUseCase.logAction(savedTask.getId(), requestId, TaskLogAction.UPDATED, "Görev güncellendi");
+        if (oldStatus != savedTask.getStatus()) {
+            taskLogUseCase.logAction(savedTask.getId(), requestId, TaskLogAction.STATUS_CHANGED,
+                "Durum: " + oldStatus + " -> " + savedTask.getStatus());
+        }
+        if (oldPriority != savedTask.getPriority()) {
+            taskLogUseCase.logAction(savedTask.getId(), requestId, TaskLogAction.PRIORITY_CHANGED,
+                "Öncelik: " + oldPriority + " -> " + savedTask.getPriority());
+        }
+        // Notifications (owner and current assignee if different from actor)
+        User owner = savedTask.getOwner();
+        if (owner != null && owner.getId() != requestId) {
+            notificationUseCase.createNotification(owner.getId(), NotificationType.TASK_UPDATED,
+                "Görev Güncellendi", "'" + savedTask.getTitle() + "' güncellendi.");
+        }
+        User assignee = savedTask.getCurrentAssignee();
+        if (assignee != null && assignee.getId() != requestId) {
+            notificationUseCase.createNotification(assignee.getId(), NotificationType.TASK_UPDATED,
+                "Görev Güncellendi", "'" + savedTask.getTitle() + "' güncellendi.");
+        }
         return Optional.of(savedTask);
     }
 

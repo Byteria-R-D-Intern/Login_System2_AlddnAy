@@ -45,7 +45,7 @@ public class TaskAssignmentController {
             userId, role, request.getTaskId(), request.getAssignedToId(), request.getMessage());
 
         if(assignment.isPresent()){
-            TaskAssignmentResponse response = new TaskAssignmentResponse();
+            TaskAssignmentResponse response = toResponseDTO(assignment.get());
             return ResponseEntity.ok(response);
         }else
             return ResponseEntity.status(400).body("Görev atama yetkiniz yok veya hata oluştu.");
@@ -124,6 +124,33 @@ public class TaskAssignmentController {
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(403).body("Atama yanıtlama yetkiniz yok veya hata oluştu.");
+        }
+    }
+
+    @PutMapping("/{assignmentId}/cancel")
+    @Operation(
+        summary = "Atamayı iptal et",
+        description = "ADMIN/MANAGER veya atayan kişi atamayı iptal edebilir."
+    )
+    public ResponseEntity<?> cancelAssignment(
+        @Parameter(description = "Atama ID'si", example = "1")
+        @PathVariable int assignmentId,
+        @RequestParam(required = false) String reason,
+        Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(401).body("Authentication bulunamadı!");
+        }
+
+        int userId = (Integer) authentication.getPrincipal();
+        String role = ControllerUtil.getRoleFromAuthentication(authentication);
+
+        Optional<TaskAssignment> assignment = taskAssignmentUseCase.cancelAssignment(userId, role, assignmentId, reason);
+        if (assignment.isPresent()) {
+            TaskAssignmentResponse response = toResponseDTO(assignment.get());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(403).body("Atama iptal yetkiniz yok veya atama bulunamadı.");
         }
     }
 

@@ -140,6 +140,16 @@ public class WebController {
         return "dashboard"; // İleride ayrı manager.html yapılabilir
     }
 
+    @GetMapping("/logs")
+    public String logsPage() {
+        return "logs";
+    }
+
+    @GetMapping("/notifications")
+    public String notificationsPage() {
+        return "notifications";
+    }
+
     /**
      * Görevler sayfası
      */
@@ -178,51 +188,38 @@ public class WebController {
         return "profile";
     }
 
-    /**
-     * Logout endpoint
-     */
+
     @GetMapping("/logout")
     public String logout() {
         // Token temizleme JavaScript tarafından yapılacak
         return "redirect:/login?logout=true";
     }
 
-    /**
-     * Error sayfası
-     */
+
     @GetMapping("/error")
     public String errorPage(Model model) {
         model.addAttribute("errorMessage", "Bir hata oluştu. Lütfen tekrar deneyin.");
         return "error";
     }
 
-    /**
-     * 404 Not Found sayfası
-     */
+
     @GetMapping("/404")
     public String notFoundPage() {
         return "404";
     }
 
-    /**
-     * 403 Forbidden sayfası
-     */
+
     @GetMapping("/403")
     public String forbiddenPage() {
         return "403";
     }
 
-    /**
-     * About/Hakkında sayfası
-     */
     @GetMapping("/about")
     public String aboutPage() {
         return "about";
     }
 
-    /**
-     * Help/Yardım sayfası
-     */
+
     @GetMapping("/help")
     public String helpPage() {
         return "help";

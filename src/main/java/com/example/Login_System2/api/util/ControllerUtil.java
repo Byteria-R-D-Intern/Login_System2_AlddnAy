@@ -80,7 +80,8 @@ public class ControllerUtil {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
         response.setEmail(user.getEmail());
-        response.setRole(user.getRole().toString());
+        // Null-safe role
+        response.setRole(user.getRole() != null ? user.getRole().toString() : "USER");
         return response;
     }
 }

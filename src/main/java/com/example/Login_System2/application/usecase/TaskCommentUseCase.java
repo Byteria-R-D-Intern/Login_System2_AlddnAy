@@ -1,10 +1,13 @@
 package com.example.Login_System2.application.usecase;
+
 import com.example.Login_System2.domain.model.Task;
 import com.example.Login_System2.domain.model.TaskComment;
 import com.example.Login_System2.domain.model.User;
 import com.example.Login_System2.domain.port.TaskCommentRepository;
 import com.example.Login_System2.domain.port.TaskRepository;
 import com.example.Login_System2.domain.port.UserRepository;
+import com.example.Login_System2.domain.model.TaskLogAction;
+import com.example.Login_System2.domain.model.NotificationType;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +22,8 @@ public class TaskCommentUseCase {
     private final TaskCommentRepository taskCommentRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final TaskLogUseCase taskLogUseCase;
+    private final NotificationUseCase notificationUseCase;
 
     private final Logger log = LoggerFactory.getLogger(TaskCommentUseCase.class);
 
@@ -59,6 +64,12 @@ public class TaskCommentUseCase {
 
         TaskComment savedComment = taskCommentRepository.save(newComment);
         log.info("Yorum başarıyla eklendi! commentId={}", savedComment.getId());
+        // Log ve bildirim
+        taskLogUseCase.logAction(task.getId(), user.getId(), TaskLogAction.COMMENT_ADDED,
+                "Yorum eklendi");
+        // Task sahibine bildirim
+        notificationUseCase.createNotification(task.getOwner().getId(), NotificationType.COMMENT_ADDED,
+                "Göreve Yorum Eklendi", "'" + task.getTitle() + "' görevine yeni yorum eklendi.");
         
         return Optional.of(savedComment);
     }
@@ -105,6 +116,9 @@ public class TaskCommentUseCase {
 
         taskCommentRepository.delete(comment);
         log.info("Yorum başarıyla silindi! commentId={}", commentId);
+        // Log
+        taskLogUseCase.logAction(comment.getTask().getId(), requesterId, TaskLogAction.COMMENT_DELETED,
+                "Yorum silindi");
         return true;
     }
 }

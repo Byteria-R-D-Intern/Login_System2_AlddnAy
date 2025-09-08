@@ -7,6 +7,8 @@ import com.example.Login_System2.domain.model.User;
 import com.example.Login_System2.domain.port.TaskAssignmentRepository;
 import com.example.Login_System2.domain.port.TaskRepository;
 import com.example.Login_System2.domain.port.UserRepository;
+import com.example.Login_System2.domain.model.TaskLogAction;
+import com.example.Login_System2.domain.model.NotificationType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +24,8 @@ public class TaskAssignmentUseCase {
     private final TaskAssignmentRepository taskAssignmentRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final TaskLogUseCase taskLogUseCase;
+    private final NotificationUseCase notificationUseCase;
 
     private final Logger log = LoggerFactory.getLogger(TaskAssignmentUseCase.class);
 
@@ -79,6 +83,9 @@ public class TaskAssignmentUseCase {
 
         TaskAssignment savedAssignment = taskAssignmentRepository.save(assignment);
         log.info("Görev başarıyla atandı! assignmentId={}", savedAssignment.getId());
+        // Log (target ile) - bildirim TaskLogUseCase içinde otomatik üretilir
+        taskLogUseCase.logActionWithTarget(task.getId(), requesterId, assignedTo.getId(), TaskLogAction.ASSIGNED,
+                "Görev " + assignedTo.getId() + " kullanıcısına atandı.");
         
         return Optional.of(savedAssignment);
     }
@@ -128,8 +135,71 @@ public class TaskAssignmentUseCase {
 
         TaskAssignment savedAssignment = taskAssignmentRepository.save(assignment);
         log.info("Atama yanıtı kaydedildi! assignmentId={}, response={}", assignmentId, response);
+        // Log ve bildirim
+        taskLogUseCase.logAction(assignment.getTask().getId(), userId, TaskLogAction.ASSIGNMENT_RESPONDED,
+                "Yanıt: " + response + (message != null ? (" - " + message) : ""));
+        // Task sahibi ve atayan kişiye bildirim
+        User owner = assignment.getTask().getOwner();
+        if (owner != null) {
+            notificationUseCase.createNotification(owner.getId(), NotificationType.ASSIGNMENT_RESPONDED,
+                    "Atama Yanıtı", assignment.getAssignedTo().getName() + " " + assignment.getAssignedTo().getSurname() +
+                            " kişi '" + assignment.getTask().getTitle() + "' için " + response + " dedi.");
+        }
+        if (assignment.getAssignedBy() != null) {
+            notificationUseCase.createNotification(assignment.getAssignedBy().getId(), NotificationType.ASSIGNMENT_RESPONDED,
+                    "Atama Yanıtı", assignment.getAssignedTo().getName() + " " + assignment.getAssignedTo().getSurname() +
+                            " kişi '" + assignment.getTask().getTitle() + "' için " + response + " dedi.");
+        }
         
         return Optional.of(savedAssignment);
+    }
+
+    // Atamayı iptal et (ADMIN/MANAGER veya assignedBy)
+    public Optional<TaskAssignment> cancelAssignment(int requesterId, String requesterRole, int assignmentId, String reason) {
+        log.info("Atama iptali: requesterId={}, requesterRole={}, assignmentId={}", requesterId, requesterRole, assignmentId);
+
+        Optional<TaskAssignment> assignmentOpt = taskAssignmentRepository.findById(assignmentId);
+        if (assignmentOpt.isEmpty()) {
+            log.warn("Atama bulunamadı! assignmentId={}", assignmentId);
+            return Optional.empty();
+        }
+
+        TaskAssignment assignment = assignmentOpt.get();
+
+        // Yetki: ADMIN/MANAGER veya atayan kişi iptal edebilir
+        boolean isPrivileged = "ADMIN".equals(requesterRole) || "MANAGER".equals(requesterRole);
+        boolean isAssignedBy = assignment.getAssignedBy() != null && assignment.getAssignedBy().getId() == requesterId;
+        if (!isPrivileged && !isAssignedBy) {
+            log.warn("İptal yetkisi yok! requesterId={}, assignmentId={}", requesterId, assignmentId);
+            return Optional.empty();
+        }
+
+        // Sadece PENDING veya ACCEPTED iptal edilsin
+        if (assignment.getStatus() == AssignmentStatus.REJECTED || assignment.getStatus() == AssignmentStatus.CANCELLED) {
+            log.warn("Bu atama zaten yanıtlanmış/iptal edilmiş. status={}", assignment.getStatus());
+            return Optional.empty();
+        }
+
+        assignment.setStatus(AssignmentStatus.CANCELLED);
+        assignment.setRespondedAt(LocalDateTime.now());
+        assignment.setMessage((assignment.getMessage() != null ? assignment.getMessage() + " | " : "") + (reason != null ? reason : "iptal"));
+
+        TaskAssignment saved = taskAssignmentRepository.save(assignment);
+        // Log ve bildirim
+        taskLogUseCase.logAction(assignment.getTask().getId(), requesterId, TaskLogAction.UPDATED,
+                "Atama iptal edildi");
+
+        User owner = assignment.getTask().getOwner();
+        if (owner != null && owner.getId() != requesterId) {
+            notificationUseCase.createNotification(owner.getId(), NotificationType.TASK_UPDATED,
+                    "Atama İptali", "'" + assignment.getTask().getTitle() + "' için atama iptal edildi.");
+        }
+        if (assignment.getAssignedTo() != null && assignment.getAssignedTo().getId() != requesterId) {
+            notificationUseCase.createNotification(assignment.getAssignedTo().getId(), NotificationType.TASK_UPDATED,
+                    "Atama İptali", "'" + assignment.getTask().getTitle() + "' için atama iptal edildi.");
+        }
+
+        return Optional.of(saved);
     }
 
     // Tüm atamaları getir (ADMIN/MANAGER için)
