@@ -41,6 +41,8 @@ public class SecurityConfig {
                     "/manager",
                     "/dashboard",
                     "/tasks",
+                    "/logs",
+                    "/notifications",
                     "/favicon.ico",         
                     "/profile",
                     "/css/**",
@@ -52,7 +54,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/task-assignments/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                 .requestMatchers("/api/task-comments/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                 .requestMatchers("/api/notifications/**").hasAnyRole("USER", "MANAGER", "ADMIN")
-                .requestMatchers("/api/task-logs/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                .requestMatchers("/api/task-logs/**").hasRole("ADMIN")
                 .requestMatchers("/api/auth/users/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

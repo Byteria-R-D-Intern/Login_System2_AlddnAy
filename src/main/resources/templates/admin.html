@@ -5,6 +5,7 @@
   <title>Yönetim Paneli</title>
   <link rel="stylesheet" href="/css/app.css">
   <link rel="stylesheet" href="/css/dashboard.css"><!-- veya ayrı admin.css açabilirsin -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='14' font-size='12'%3E👑%3C/text%3E%3C/svg%3E">
   <script src="/js/auth.js" defer></script>
 </head>
 <body class="dashboard-page">
@@ -58,7 +59,26 @@
         <div></div>
       </div>
 
-    <!-- Loglar (Admin) -->
+      <div id="profilesLoading" class="muted hidden" style="margin-top:8px;">Yükleniyor...</div>
+      <div id="profilesEmpty" class="muted hidden" style="margin-top:8px;">Profil bulunamadı</div>
+      <div style="overflow:auto;">
+        <table id="profilesTable" class="table" style="width:100%; border-collapse:collapse; margin-top:8px;">
+          <thead>
+            <tr style="text-align:left;">
+              <th>ProfilID</th>
+              <th>UserID</th>
+              <th>Telefon</th>
+              <th>Adres</th>
+              <th>Doğum Tarihi</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      </div>
+
+    <!-- Loglar (Admin) - PROFILLER panelinin DIŞINDA ayrı bir panel olarak -->
     <div id="logsPanel" class="card hidden" style="margin-top:12px;">
       <div class="title">Sistem Logları</div>
       <div class="actions" style="justify-content:space-between;">
@@ -84,24 +104,6 @@
         </table>
       </div>
     </div>
-      <div id="profilesLoading" class="muted hidden" style="margin-top:8px;">Yükleniyor...</div>
-      <div id="profilesEmpty" class="muted hidden" style="margin-top:8px;">Profil bulunamadı</div>
-      <div style="overflow:auto;">
-        <table id="profilesTable" class="table" style="width:100%; border-collapse:collapse; margin-top:8px;">
-          <thead>
-            <tr style="text-align:left;">
-              <th>ProfilID</th>
-              <th>UserID</th>
-              <th>Telefon</th>
-              <th>Adres</th>
-              <th>Doğum Tarihi</th>
-              <th>İşlemler</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      </div>
 
     <!-- Modal (genel) -->
     <div id="adminModal" class="modal">
@@ -134,7 +136,7 @@
       // Sekme butonları
       document.getElementById('tabUsers').addEventListener('click', () => showPanel('users'));
       document.getElementById('tabProfiles').addEventListener('click', () => showPanel('profiles'));
-      document.getElementById('tabLogs').addEventListener('click', () => showPanel('logs'));
+      document.getElementById('tabLogs').addEventListener('click', () => { showPanel('logs'); loadLogs(); });
 
       // Varsayılan: kullanıcılar paneli + verileri yükle
       showPanel('users');
@@ -328,8 +330,13 @@
       toggleLoading('logs', true);
       const res = await Auth.authFetch('/api/task-logs/all');
       toggleLoading('logs', false);
-      if (!res.ok) { alert('Loglar yüklenemedi'); return; }
+      if (!res.ok) {
+        console.error('Log API error status:', res.status);
+        alert(res.status === 403 ? 'Sadece ADMIN logları görebilir' : 'Loglar yüklenemedi');
+        return;
+      }
       const logs = await res.json();
+      console.log('Logs loaded:', Array.isArray(logs) ? logs.length : logs);
       renderLogs(logs);
     }
 
@@ -343,9 +350,9 @@
         tr.innerHTML = `
           <td>${l.id}</td>
           <td>${(l.createdAt || '').toString().substring(0,16).replace('T',' ')}</td>
-          <td>${l.task ? l.task.id : '-'}</td>
-          <td>${l.actor ? (l.actor.name || '') : '-'}</td>
-          <td>${l.target ? (l.target.name || '') : '-'}</td>
+          <td>${l.taskId ?? '-'}</td>
+          <td>${l.actorName ?? ''}</td>
+          <td>${l.targetName ?? ''}</td>
           <td>${l.action}</td>
           <td>${escapeHtml(l.message || '')}</td>
         `;
