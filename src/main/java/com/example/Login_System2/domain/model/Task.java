@@ -20,7 +20,7 @@ public class Task{
     private int id;
 
     @ManyToOne
-    @JoinColumn(name = "owner_id", nullable = false)
+    @JoinColumn(name = "owner_id", nullable = true)
     private User owner;
 
     @Column(nullable = false)

@@ -6,24 +6,48 @@
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/dashboard.css" />
     <style>
+        .navbar { background: #0f172a; color: #fff; padding: 10px 12px; }
+        .navbar .container { max-width: 960px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .nav-left { display: flex; gap: 10px; align-items: center; }
+        .brand { font-weight: 700; letter-spacing: .3px; }
+        .nav-links a { color: #e2e8f0; text-decoration: none; margin-left: 12px; font-size: 14px; }
+        .nav-links a:hover { color: #fff; }
+
         .page-container { max-width: 960px; margin: 24px auto; padding: 0 12px; }
         .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .card-title { font-size: 18px; font-weight: 700; margin: 0 0 12px; }
         .notif-list { display: flex; flex-direction: column; gap: 12px; }
-        .notif { padding: 12px; border: 1px solid #eee; border-radius: 10px; background: #fafafa; }
+        .notif { padding: 12px; border: 1px solid #eee; border-radius: 10px; background: #fafafa; display:flex; gap:12px; align-items:flex-start; cursor:pointer; }
+        .notif:hover { background: #f6f7ff; }
         .notif.unread { background: #fbfbff; border-color: #dfe3ff; }
+        .notif .icon { width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; border-radius: 8px; background:#eef2ff; color:#4f46e5; font-size: 18px; flex: 0 0 34px; }
+        .notif .content { flex: 1; }
         .notif .title { font-weight: 600; margin: 0 0 6px; }
         .notif .meta { color: #666; font-size: 12px; margin-top: 6px; }
+        .badge { display:inline-block; padding:2px 8px; border-radius: 999px; font-size: 11px; background:#edf2f7; color:#334155; margin-left:6px; }
+        .badge.type-Comment { background:#e0f2fe; color:#075985; }
+        .badge.type-Assign { background:#dcfce7; color:#166534; }
+        .badge.type-Update { background:#fee2e2; color:#991b1b; }
     </style>
     <script src="/js/auth.js" defer></script>
     <script>
+    let notifInFlight = false;
+    let notifPollId = null;
+
     document.addEventListener('DOMContentLoaded', async () => {
       const session = Auth.ensureAuthenticated();
       if (!session) return;
       await loadNotifications();
+      // Arka planda hafif polling: 10 sn'de bir güncelle
+      notifPollId = setInterval(async () => {
+        if (notifInFlight || document.hidden) return;
+        await loadNotifications();
+      }, 10000);
     });
 
     async function loadNotifications() {
+      if (notifInFlight) return;
+      notifInFlight = true;
       const loading = document.getElementById('notifLoading');
       const list = document.getElementById('notifList');
       loading.style.display = 'block';
@@ -41,14 +65,49 @@
         (items || []).forEach(n => {
           const div = document.createElement('div');
           div.className = 'notif' + (!n.readFlag ? ' unread' : '');
-          div.innerHTML = `<div class='title'>${escapeHtml(n.title || '')}</div>
-                           <div>${escapeHtml(n.message || '')}</div>
-                           <div class='meta'>${(n.createdAt || '').toString().substring(0,16).replace('T',' ')}</div>`;
+          // Actions for assignment notifications
+          let actions = '';
+          if (n.type === 'TASK_ASSIGNED' && n.data && n.data.assignmentId) {
+            const aid = n.data.assignmentId;
+            actions = `<div style="margin-top:8px; display:flex; gap:8px;">
+                        <button class="btn btn-primary btn-sm" onclick="respondFromNotif(${aid}, 'ACCEPTED')">✅ Kabul</button>
+                        <button class="btn btn-danger btn-sm" onclick="respondFromNotif(${aid}, 'REJECTED')">❌ Reddet</button>
+                       </div>`;
+          }
+          const icon = iconByType(n.type);
+          const typeBadge = badgeByType(n.type);
+          div.innerHTML = `
+            <div class='icon'>${icon}</div>
+            <div class='content'>
+              <div class='title'>${escapeHtml(n.title || '')} ${typeBadge}</div>
+              <div class='body'>${escapeHtml(n.message || '')}</div>
+              ${actions}
+              <div class='meta'>${(n.createdAt || '').toString().substring(0,16).replace('T',' ')}</div>
+            </div>`;
+          // Click to navigate + mark as read
+          div.addEventListener('click', async (ev) => {
+            // avoid handling clicks on action buttons
+            if (ev.target.tagName === 'BUTTON') return;
+            try {
+              const token = localStorage.getItem('authToken');
+              await fetch(`/api/notifications/${n.id}/read`, { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+            } catch {}
+            // basic navigation based on data (always go to tasks)
+            let url = '/tasks';
+            if (n.data && n.data.taskId) {
+              url = `/tasks?taskId=${n.data.taskId}`;
+              if (n.data.commentId) {
+                url += `#comment-${n.data.commentId}`;
+              }
+            }
+            window.location.href = url;
+          });
           list.appendChild(div);
         });
       } catch (e) {
         loading.style.display = 'none';
       }
+      notifInFlight = false;
     }
 
     function escapeHtml(text) {
@@ -56,9 +115,61 @@
       div.textContent = text;
       return div.innerHTML;
     }
+    async function respondFromNotif(assignmentId, response) {
+      try {
+        const token = localStorage.getItem('authToken');
+        const res = await fetch(`/api/task-assignments/${assignmentId}/respond`, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ response, message: '' })
+        });
+        if (res.ok) {
+          await loadNotifications();
+          alert(response === 'ACCEPTED' ? 'Atama kabul edildi' : 'Atama reddedildi');
+        } else {
+          alert('İşlem başarısız (yetki/validasyon)');
+        }
+      } catch (e) {
+        alert('İşlem sırasında hata oluştu');
+      }
+    }
+    function iconByType(t) {
+      switch (t) {
+        case 'TASK_ASSIGNED': return '👤';
+        case 'ASSIGNMENT_RESPONDED': return '✉️';
+        case 'COMMENT_ADDED': return '💬';
+        case 'COMMENT_DELETED': return '🗑️';
+        case 'STATUS_CHANGED': return '🔄';
+        case 'PRIORITY_CHANGED': return '⚡';
+        default: return '🔔';
+      }
+    }
+    function badgeByType(t) {
+      const map = {
+        TASK_ASSIGNED: { text: 'Atama', cls: 'type-Assign' },
+        ASSIGNMENT_RESPONDED: { text: 'Yanıt', cls: 'type-Update' },
+        COMMENT_ADDED: { text: 'Yorum', cls: 'type-Comment' },
+        COMMENT_DELETED: { text: 'Yorum Silindi', cls: 'type-Comment' },
+        STATUS_CHANGED: { text: 'Durum', cls: 'type-Update' },
+        PRIORITY_CHANGED: { text: 'Öncelik', cls: 'type-Update' }
+      };
+      const it = map[t];
+      return it ? `<span class="badge ${it.cls}">${it.text}</span>` : '';
+    }
     </script>
-</head>
-<body>
+ </head>
+ <body>
+  <div class="navbar">
+    <div class="container">
+      <div class="nav-left">
+        <div class="brand">📫 Bildirimler</div>
+      </div>
+      <div class="nav-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/tasks">Görevler</a>
+      </div>
+    </div>
+  </div>
   <div class="page-container">
     <div class="card">
       <h2 id="notifPageTitle" class="card-title">Bildirimlerim</h2>

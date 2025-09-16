@@ -135,6 +135,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Form submit handler
     document.getElementById('taskForm').addEventListener('submit', handleTaskSubmit);
+    // Bildirimlerden yönlendirme: URL'de taskId varsa paneli ve yorumları aç
+    const params = new URLSearchParams(window.location.search);
+    const targetTaskId = Number(params.get('taskId'));
+    if (targetTaskId) {
+        // tasks yüklendikten sonra ilgili kartı açacağız
+        const checkAndOpen = setInterval(() => {
+            const card = document.querySelector(`#details-${targetTaskId}`);
+            if (card) {
+                clearInterval(checkAndOpen);
+                // yorum panelini aç ve gerekirse anchor'a kaydır
+                toggleComments(targetTaskId).then(() => {
+                    const hash = window.location.hash;
+                    if (hash && hash.startsWith('#comment-')) {
+                        const el = document.querySelector(hash);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }
+        }, 200);
+        setTimeout(() => clearInterval(checkAndOpen), 6000);
+    }
 });
 
 // Tasks'ları API'den yükle
@@ -494,6 +515,13 @@ async function submitAssignmentUI(taskId) {
     const res = await assignTask(taskId, assignedToId, message);
     if (res.ok) {
         showNotification('Atama yapıldı', 'success');
+        // Panelin açık olduğundan emin ol ve listeyi yenile
+        const panel = document.getElementById(`details-${taskId}`);
+        const assignmentsBox = document.getElementById(`assignments-${taskId}`);
+        if (panel && assignmentsBox) {
+            panel.style.display = 'block';
+            assignmentsBox.style.display = 'block';
+        }
         await renderAssignments(taskId);
     } else {
         showNotification('Atama yapılamadı', 'error');
@@ -574,7 +602,7 @@ async function renderComments(taskId) {
             ? `<button class="btn btn-danger btn-sm" style="margin-left:8px;" onclick="deleteCommentUI(${c.id}, ${taskId})">🗑️ Sil</button>`
             : '';
         return `
-          <div style="border-bottom:1px solid #eee; padding:8px 0;">
+          <div id="comment-${c.id}" style="border-bottom:1px solid #eee; padding:8px 0;">
             <div><b>${escapeHtml(c.user?.email || 'Kullanıcı')}</b> • <span class="muted">${escapeHtml(c.taskTitle || '')}</span></div>
             <div>${escapeHtml(c.comment || '')}</div>
             <div class="muted" style="font-size:12px;">${escapeHtml(c.createdAt || '')}</div>

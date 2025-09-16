@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Service
 @AllArgsConstructor
@@ -39,7 +41,11 @@ public class TaskCommentUseCase {
         }
 
         Task task = taskOpt.get();
-        log.info("Task bulundu! Task owner ID: {}", task.getOwner().getId());
+        if (task.getOwner() != null) {
+            log.info("Task bulundu! Task owner ID: {}", task.getOwner().getId());
+        } else {
+            log.info("Task bulundu! Owner bulunmuyor (null)");
+        }
 
         // Kullanıcı var mı kontrol et
         Optional<User> userOpt = userRepository.findById(requesterId);
@@ -50,10 +56,17 @@ public class TaskCommentUseCase {
 
         User user = userOpt.get();
 
-        // Yetki kontrolü
-        if (requesterRole.equals("USER") && task.getOwner().getId() != requesterId) {
-            log.warn("USER sadece kendi görevlerine yorum yapabilir! requesterId={}, ownerId={}", requesterId, task.getOwner().getId());
-            return Optional.empty();
+        // Yetki kontrolü: USER ise owner==me veya currentAssignee==me olmalı
+        if (requesterRole.equals("USER")) {
+            boolean isOwner = task.getOwner() != null && task.getOwner().getId() == requesterId;
+            boolean isAssignee = task.getCurrentAssignee() != null && task.getCurrentAssignee().getId() == requesterId;
+            if (!isOwner && !isAssignee) {
+                log.warn("USER sadece sahibi olduğu veya atandığı görevlere yorum yapabilir! requesterId={}, ownerId={}, assigneeId={}",
+                        requesterId,
+                        task.getOwner() != null ? task.getOwner().getId() : null,
+                        task.getCurrentAssignee() != null ? task.getCurrentAssignee().getId() : null);
+                return Optional.empty();
+            }
         }
 
         // Yorum oluştur
@@ -64,12 +77,20 @@ public class TaskCommentUseCase {
 
         TaskComment savedComment = taskCommentRepository.save(newComment);
         log.info("Yorum başarıyla eklendi! commentId={}", savedComment.getId());
-        // Log ve bildirim
-        taskLogUseCase.logAction(task.getId(), user.getId(), TaskLogAction.COMMENT_ADDED,
-                "Yorum eklendi");
-        // Task sahibine bildirim
-        notificationUseCase.createNotification(task.getOwner().getId(), NotificationType.COMMENT_ADDED,
-                "Göreve Yorum Eklendi", "'" + task.getTitle() + "' görevine yeni yorum eklendi.");
+        // Log (metadata: commentId)
+        ObjectMapper om = new ObjectMapper();
+        ObjectNode metadata = om.createObjectNode();
+        metadata.put("commentId", savedComment.getId());
+        taskLogUseCase.logActionWithPayload(task.getId(), user.getId(), TaskLogAction.COMMENT_ADDED,
+                "Yorum eklendi", null, metadata);
+        // Ek bildirim: mevcut atanan kişiye (owner'dan farklıysa ve aktör değilse)
+        if (task.getCurrentAssignee() != null) {
+            int assigneeId = task.getCurrentAssignee().getId();
+            if ((task.getOwner() == null || assigneeId != task.getOwner().getId()) && assigneeId != user.getId()) {
+                notificationUseCase.createNotificationByActor(user.getId(), assigneeId, NotificationType.COMMENT_ADDED,
+                        "Göreve Yorum Eklendi", "'" + task.getTitle() + "' görevine yeni yorum eklendi.");
+            }
+        }
         
         return Optional.of(savedComment);
     }
@@ -87,10 +108,14 @@ public class TaskCommentUseCase {
 
         Task task = taskOpt.get();
 
-        // USER sadece kendi görevlerinin yorumlarını görebilir
-        if (requesterRole.equals("USER") && task.getOwner().getId() != requesterId) {
-            log.warn("USER sadece kendi görevlerinin yorumlarını görebilir!");
-            return List.of();
+        // USER: owner==me veya currentAssignee==me ise görebilir
+        if (requesterRole.equals("USER")) {
+            boolean isOwner = task.getOwner() != null && task.getOwner().getId() == requesterId;
+            boolean isAssignee = task.getCurrentAssignee() != null && task.getCurrentAssignee().getId() == requesterId;
+            if (!isOwner && !isAssignee) {
+                log.warn("USER sadece sahibi olduğu veya atandığı görevlerin yorumlarını görebilir!");
+                return List.of();
+            }
         }
 
         return taskCommentRepository.findByTaskId(taskId);

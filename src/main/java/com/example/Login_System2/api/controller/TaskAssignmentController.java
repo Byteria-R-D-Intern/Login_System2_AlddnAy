@@ -127,7 +127,7 @@ public class TaskAssignmentController {
         }
     }
 
-    @PutMapping("/{assignmentId}/cancel")
+    /*@PutMapping("/{assignmentId}/cancel")
     @Operation(
         summary = "Atamayı iptal et",
         description = "ADMIN/MANAGER veya atayan kişi atamayı iptal edebilir."
@@ -152,7 +152,7 @@ public class TaskAssignmentController {
         } else {
             return ResponseEntity.status(403).body("Atama iptal yetkiniz yok veya atama bulunamadı.");
         }
-    }
+    }*/
 
 
     private TaskAssignmentResponse toResponseDTO(TaskAssignment assignment) {

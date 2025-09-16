@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Comparator;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 @AllArgsConstructor
@@ -45,11 +48,83 @@ public class TaskLogUseCase {
 
         TaskLog saved = taskLogRepository.save(logEntry);
 
-        // Basit kural: hedef varsa ona, yoksa task owner'a bildirim üret
-        int recipientId = (logEntry.getTarget() != null)
-                ? logEntry.getTarget().getId()
-                : logEntry.getTask().getOwner().getId();
-        notificationUseCase.createFromTaskLog(saved, recipientId);
+        // Alıcıları belirle: owner + currentAssignee + (varsa) target; aktörü çıkar, tekrarı engelle
+        Set<Integer> recipients = new LinkedHashSet<>();
+        if (logEntry.getTask().getOwner() != null) {
+            recipients.add(logEntry.getTask().getOwner().getId());
+        }
+        if (logEntry.getTask().getCurrentAssignee() != null) {
+            recipients.add(logEntry.getTask().getCurrentAssignee().getId());
+        }
+        if (logEntry.getTarget() != null) {
+            recipients.add(logEntry.getTarget().getId());
+        }
+        if (logEntry.getActor() != null) {
+            recipients.remove(logEntry.getActor().getId());
+        }
+        // ASSIGNED özel durumu: sadece hedef kullanıcıya bildirim gönder
+        if (saved.getAction() == TaskLogAction.ASSIGNED) {
+            recipients.clear();
+            if (logEntry.getTarget() != null) {
+                recipients.add(logEntry.getTarget().getId());
+            }
+        }
+        for (Integer rid : recipients) {
+            // ASSIGNMENT_RESPONDED bildirim üretme: sadece logda tut
+            if (saved.getAction() == TaskLogAction.ASSIGNMENT_RESPONDED) continue;
+            notificationUseCase.createFromTaskLog(saved, rid);
+        }
+
+        return Optional.of(saved);
+    }
+
+    // payload: changes/metadata ile loglama (target olmadan)
+    @Transactional
+    public Optional<TaskLog> logActionWithPayload(int taskId, int actorId,
+                                                  TaskLogAction action,
+                                                  String details,
+                                                  JsonNode changes,
+                                                  JsonNode metadata) {
+        Optional<Task> taskOpt = taskRepository.findById(taskId);
+        Optional<User> actorOpt = userRepository.findById(actorId);
+        if (taskOpt.isEmpty() || actorOpt.isEmpty()) {
+            log.warn("Log için task/actor bulunamadı! taskId={}, actorId={}", taskId, actorId);
+            return Optional.empty();
+        }
+
+        TaskLog logEntry = new TaskLog();
+        logEntry.setTask(taskOpt.get());
+        logEntry.setActor(actorOpt.get());
+        logEntry.setAction(action);
+        logEntry.setMessage(details);
+        logEntry.setChanges(changes);
+        logEntry.setMetadata(metadata);
+
+        TaskLog saved = taskLogRepository.save(logEntry);
+
+        Set<Integer> recipients = new LinkedHashSet<>();
+        if (logEntry.getTask().getOwner() != null) {
+            recipients.add(logEntry.getTask().getOwner().getId());
+        }
+        if (logEntry.getTask().getCurrentAssignee() != null) {
+            recipients.add(logEntry.getTask().getCurrentAssignee().getId());
+        }
+        if (logEntry.getTarget() != null) {
+            recipients.add(logEntry.getTarget().getId());
+        }
+        if (logEntry.getActor() != null) {
+            recipients.remove(logEntry.getActor().getId());
+        }
+        if (saved.getAction() == TaskLogAction.ASSIGNED) {
+            recipients.clear();
+            if (logEntry.getTarget() != null) {
+                recipients.add(logEntry.getTarget().getId());
+            }
+        }
+        for (Integer rid : recipients) {
+            if (saved.getAction() == TaskLogAction.ASSIGNMENT_RESPONDED) continue;
+            notificationUseCase.createFromTaskLog(saved, rid);
+        }
 
         return Optional.of(saved);
     }
@@ -79,8 +154,84 @@ public class TaskLogUseCase {
 
         TaskLog saved = taskLogRepository.save(logEntry);
 
-        int recipientId = (targetUser != null) ? targetUser.getId() : logEntry.getTask().getOwner().getId();
-        notificationUseCase.createFromTaskLog(saved, recipientId);
+        Set<Integer> recipients = new LinkedHashSet<>();
+        if (logEntry.getTask().getOwner() != null) {
+            recipients.add(logEntry.getTask().getOwner().getId());
+        }
+        if (logEntry.getTask().getCurrentAssignee() != null) {
+            recipients.add(logEntry.getTask().getCurrentAssignee().getId());
+        }
+        if (targetUser != null) {
+            recipients.add(targetUser.getId());
+        }
+        if (logEntry.getActor() != null) {
+            recipients.remove(logEntry.getActor().getId());
+        }
+        if (saved.getAction() == TaskLogAction.ASSIGNED) {
+            recipients.clear();
+            if (targetUser != null) {
+                recipients.add(targetUser.getId());
+            }
+        }
+        for (Integer rid : recipients) {
+            if (saved.getAction() == TaskLogAction.ASSIGNMENT_RESPONDED) continue;
+            notificationUseCase.createFromTaskLog(saved, rid);
+        }
+
+        return Optional.of(saved);
+    }
+
+    // Target + payload ile loglama
+    @Transactional
+    public Optional<TaskLog> logActionWithTargetAndPayload(int taskId, int actorId, Integer targetUserId,
+                                                           TaskLogAction action, String details,
+                                                           JsonNode changes, JsonNode metadata) {
+        Optional<Task> taskOpt = taskRepository.findById(taskId);
+        Optional<User> actorOpt = userRepository.findById(actorId);
+        if (taskOpt.isEmpty() || actorOpt.isEmpty()) {
+            log.warn("Log için task/actor bulunamadı! taskId={}, actorId={}", taskId, actorId);
+            return Optional.empty();
+        }
+
+        User targetUser = null;
+        if (targetUserId != null) {
+            targetUser = userRepository.findById(targetUserId).orElse(null);
+        }
+
+        TaskLog logEntry = new TaskLog();
+        logEntry.setTask(taskOpt.get());
+        logEntry.setActor(actorOpt.get());
+        logEntry.setTarget(targetUser);
+        logEntry.setAction(action);
+        logEntry.setMessage(details);
+        logEntry.setChanges(changes);
+        logEntry.setMetadata(metadata);
+
+        TaskLog saved = taskLogRepository.save(logEntry);
+
+        Set<Integer> recipients = new LinkedHashSet<>();
+        if (logEntry.getTask().getOwner() != null) {
+            recipients.add(logEntry.getTask().getOwner().getId());
+        }
+        if (logEntry.getTask().getCurrentAssignee() != null) {
+            recipients.add(logEntry.getTask().getCurrentAssignee().getId());
+        }
+        if (targetUser != null) {
+            recipients.add(targetUser.getId());
+        }
+        if (logEntry.getActor() != null) {
+            recipients.remove(logEntry.getActor().getId());
+        }
+        if (saved.getAction() == TaskLogAction.ASSIGNED) {
+            recipients.clear();
+            if (targetUser != null) {
+                recipients.add(targetUser.getId());
+            }
+        }
+        for (Integer rid : recipients) {
+            if (saved.getAction() == TaskLogAction.ASSIGNMENT_RESPONDED) continue;
+            notificationUseCase.createFromTaskLog(saved, rid);
+        }
 
         return Optional.of(saved);
     }

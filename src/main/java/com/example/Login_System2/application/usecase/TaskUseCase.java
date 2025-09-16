@@ -7,7 +7,6 @@ import com.example.Login_System2.domain.port.TaskRepository;
 import com.example.Login_System2.domain.port.UserRepository;
 
 import com.example.Login_System2.domain.model.TaskLogAction;
-import com.example.Login_System2.domain.model.NotificationType;
 import com.example.Login_System2.domain.model.User;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +15,8 @@ import org.springframework.stereotype.Service;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Service
 @AllArgsConstructor
@@ -24,7 +25,8 @@ public class TaskUseCase {
     private final UserRepository userRepository;
     // private final TaskAssignmentRepository taskAssignmentRepository; // no longer used for auto-assign
     private final TaskLogUseCase taskLogUseCase;
-    private final NotificationUseCase notificationUseCase;
+    // NotificationUseCase enjekte edilse de bildirim üretimi TaskLogUseCase üzerinden yapılır
+    // private final NotificationUseCase notificationUseCase;
 
     private final Logger log = LoggerFactory.getLogger(TaskUseCase.class);
 
@@ -68,7 +70,7 @@ public class TaskUseCase {
 
         Task task = taskOpt.get();
         
-        if(requestRole.equals("USER") && task.getOwner().getId() != requestId){
+        if (requestRole.equals("USER") && (task.getOwner() == null || task.getOwner().getId() != requestId)) {
             log.warn("USER sadece kendi görevlerini görebilir! requesterId={}, ownerId={}", requestId, task.getOwner().getId());
             return Optional.empty();
         }
@@ -91,7 +93,7 @@ public class TaskUseCase {
         Priority oldPriority = existingTask.getPriority();
         
         // USER sadece kendi görevlerini güncelleyebilir
-        if (requestRole.equals("USER") && requestId != existingTask.getOwner().getId()) {
+        if (requestRole.equals("USER") && (existingTask.getOwner() == null || requestId != existingTask.getOwner().getId())) {
             log.warn("USER sadece kendi görevlerini güncelleyebilir! requesterId={}, ownerId={}", requestId, existingTask.getOwner().getId());
             return Optional.empty();
         }
@@ -103,27 +105,29 @@ public class TaskUseCase {
 
         Task savedTask = taskRepository.save(existingTask);
         log.info("Görev başarıyla güncellendi! taskId={}", taskId);
-        // Logs
-        taskLogUseCase.logAction(savedTask.getId(), requestId, TaskLogAction.UPDATED, "Görev güncellendi");
+        // Logs + diffs
+        taskLogUseCase.logActionWithPayload(savedTask.getId(), requestId, TaskLogAction.UPDATED,
+                "Görev güncellendi", null, null);
+        ObjectMapper om = new ObjectMapper();
         if (oldStatus != savedTask.getStatus()) {
-            taskLogUseCase.logAction(savedTask.getId(), requestId, TaskLogAction.STATUS_CHANGED,
-                "Durum: " + oldStatus + " -> " + savedTask.getStatus());
+            ObjectNode changes = om.createObjectNode();
+            ObjectNode statusNode = om.createObjectNode();
+            statusNode.put("old", oldStatus.name());
+            statusNode.put("new", savedTask.getStatus().name());
+            changes.set("status", statusNode);
+            taskLogUseCase.logActionWithPayload(savedTask.getId(), requestId, TaskLogAction.STATUS_CHANGED,
+                    "Durum: " + oldStatus + " -> " + savedTask.getStatus(), changes, null);
         }
         if (oldPriority != savedTask.getPriority()) {
-            taskLogUseCase.logAction(savedTask.getId(), requestId, TaskLogAction.PRIORITY_CHANGED,
-                "Öncelik: " + oldPriority + " -> " + savedTask.getPriority());
+            ObjectNode changes = om.createObjectNode();
+            ObjectNode prNode = om.createObjectNode();
+            prNode.put("old", oldPriority.name());
+            prNode.put("new", savedTask.getPriority().name());
+            changes.set("priority", prNode);
+            taskLogUseCase.logActionWithPayload(savedTask.getId(), requestId, TaskLogAction.PRIORITY_CHANGED,
+                    "Öncelik: " + oldPriority + " -> " + savedTask.getPriority(), changes, null);
         }
-        // Notifications (owner and current assignee if different from actor)
-        User owner = savedTask.getOwner();
-        if (owner != null && owner.getId() != requestId) {
-            notificationUseCase.createNotification(owner.getId(), NotificationType.TASK_UPDATED,
-                "Görev Güncellendi", "'" + savedTask.getTitle() + "' güncellendi.");
-        }
-        User assignee = savedTask.getCurrentAssignee();
-        if (assignee != null && assignee.getId() != requestId) {
-            notificationUseCase.createNotification(assignee.getId(), NotificationType.TASK_UPDATED,
-                "Görev Güncellendi", "'" + savedTask.getTitle() + "' güncellendi.");
-        }
+        // Bildirimler log üzerinden üretilecek (createFromTaskLog). Burada manuel üretim yok.
         return Optional.of(savedTask);
     }
 
@@ -139,7 +143,7 @@ public class TaskUseCase {
         Task task = taskOpt.get();
         
         // USER sadece kendi görevlerini silebilir
-        if ("USER".equals(requesterRole) && requesterId != task.getOwner().getId()) {
+        if ("USER".equals(requesterRole) && (task.getOwner() == null || requesterId != task.getOwner().getId())) {
             log.warn("USER sadece kendi görevlerini silebilir! requesterId={}, ownerId={}", requesterId, task.getOwner().getId());
             return false;
         }
@@ -153,11 +157,17 @@ public class TaskUseCase {
         log.info("Tüm görevleri getirme isteği: requesterId={}, requesterRole={}, ownerId={}, status={}, priority={}, title={}", 
                  requestId, requestRole, ownerId, status, priority, title);
 
-        // USER sadece kendi görevlerini görebilir
+        // USER kendi oluşturduğu (owner==me) ve kendisine atanmış (currentAssignee==me) görevleri görebilir
         if (requestRole.equals("USER")) {
-            List<Task> userTasks = taskRepository.findByOwnerId(requestId);
+            List<Task> ownedTasks = taskRepository.findByOwnerId(requestId);
+            List<Task> assignedTasks = taskRepository.findByCurrentAssigneeId(requestId);
             
-            return userTasks.stream()
+            // owned + assigned birleştir, distinct uygula
+            List<Task> combined = java.util.stream.Stream.concat(ownedTasks.stream(), assignedTasks.stream())
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+
+            return combined.stream()
                 .filter(task -> status == null || task.getStatus() == status)
                 .filter(task -> priority == null || task.getPriority() == priority)
                 .filter(task -> title == null || title.isEmpty() || 
@@ -169,7 +179,7 @@ public class TaskUseCase {
         List<Task> allTasks = taskRepository.findAll();
         
         return allTasks.stream()
-            .filter(task -> ownerId == null || task.getOwner().getId() == ownerId)
+            .filter(task -> ownerId == null || (task.getOwner() != null && task.getOwner().getId() == ownerId))
             .filter(task -> status == null || task.getStatus() == status)
             .filter(task -> priority == null || task.getPriority() == priority)
             .filter(task -> title == null || title.isEmpty() || 

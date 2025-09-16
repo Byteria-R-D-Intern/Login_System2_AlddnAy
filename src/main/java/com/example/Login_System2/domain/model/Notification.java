@@ -10,13 +10,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "notifications")
-
 public class Notification {
 
     @Id
@@ -26,6 +24,11 @@ public class Notification {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    // Bildirimi oluşturan aktör (opsiyonel)
+    @ManyToOne
+    @JoinColumn(name = "actor_id")
+    private User actor;
 
     // Bu bildirim hangi TaskLog'dan üretildi (opsiyonel bağ)
     @ManyToOne
@@ -61,6 +64,15 @@ public class Notification {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+    }
+
+    // Derleme sorunlarını önlemek için actor için açık getter/setter
+    public User getActor() {
+        return actor;
+    }
+
+    public void setActor(User actor) {
+        this.actor = actor;
     }
 }
 

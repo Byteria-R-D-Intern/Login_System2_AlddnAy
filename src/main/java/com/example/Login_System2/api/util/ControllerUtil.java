@@ -31,11 +31,15 @@ public class ControllerUtil {
         response.setDescription(task.getDescription());
         response.setStatus(task.getStatus());
         response.setPriority(task.getPriority());
-        response.setOwnerId(task.getOwner().getId());
+        if (task.getOwner() != null) {
+            response.setOwnerId(task.getOwner().getId());
+        }
         
         // Owner bilgisi
-        UserResponse ownerResponse = toUserResponse(task.getOwner());
-        response.setOwner(ownerResponse);
+        if (task.getOwner() != null) {
+            UserResponse ownerResponse = toUserResponse(task.getOwner());
+            response.setOwner(ownerResponse);
+        }
         
         // Atama bilgileri
         List<TaskAssignmentResponse> assignmentResponses = task.getAssignments().stream()

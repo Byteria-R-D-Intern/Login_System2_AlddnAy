@@ -36,7 +36,7 @@ public class User {
     @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.ALL)
     private List<TaskAssignment> assignmentsReceived = new ArrayList<>();
 
-    @OneToMany(mappedBy = "currentAssignee", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "currentAssignee")
     private List<Task> currentlyAssignedTasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

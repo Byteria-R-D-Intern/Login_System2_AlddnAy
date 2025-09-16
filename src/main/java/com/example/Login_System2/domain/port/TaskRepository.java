@@ -11,6 +11,7 @@ public interface TaskRepository {
     Optional<Task> findById(int id);
     List<Task> findAll();
     List<Task> findByOwnerId(int ownerId);
+    List<Task> findByCurrentAssigneeId(int userId);
     List<Task> findByStatus(Status status);
     List<Task> findByPriority(Priority priority);
     List<Task> findByTitleContaining(String title);

@@ -43,6 +43,34 @@ public class NotificationUseCase {
         return Optional.of(saved);
     }
 
+    public Optional<Notification> createNotificationByActor(int actorId, int userId, NotificationType type, String title, String message) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<User> actorOpt = userRepository.findById(actorId);
+        if (userOpt.isEmpty()) {
+            log.warn("Bildirim için kullanıcı bulunamadı! userId={}", userId);
+            return Optional.empty();
+        }
+        if (actorOpt.isEmpty()) {
+            log.warn("Bildirim için actor bulunamadı! actorId={}", actorId);
+            return Optional.empty();
+        }
+        // Kendine bildirim üretme politikasına göre engelle
+        if (actorId == userId) {
+            log.info("Kendine bildirim üretilmedi. actorId==userId: {}", userId);
+            return Optional.empty();
+        }
+
+        Notification n = new Notification();
+        n.setUser(userOpt.get());
+        n.setActor(actorOpt.get());
+        n.setType(type);
+        n.setTitle(title);
+        n.setMessage(message);
+
+        Notification saved = notificationRepository.save(n);
+        return Optional.of(saved);
+    }
+
     public List<Notification> getMyNotifications(int userId) {
         return notificationRepository.findByUserId(userId);
     }
@@ -75,6 +103,15 @@ public class NotificationUseCase {
 
         Notification n = new Notification();
         n.setUser(userOpt.get());
+        // actor: taskLog.actor
+        if (taskLog.getActor() != null) {
+            // Kendine bildirim üretmeme politikası
+            if (taskLog.getActor().getId() == recipientUserId) {
+                log.info("Kendine bildirim üretilmedi. actorId==recipientId: {}", recipientUserId);
+                return Optional.empty();
+            }
+            n.setActor(taskLog.getActor());
+        }
         n.setType(type);
         n.setTitle(title);
         n.setMessage(message);
@@ -86,10 +123,38 @@ public class NotificationUseCase {
         if (taskLog.getComment() != null) {
             data.put("commentId", taskLog.getComment().getId());
         }
+        // assignmentId varsa metadata'dan notification data'ya yansıt
+        if (taskLog.getMetadata() != null && taskLog.getMetadata().has("assignmentId")) {
+            try {
+                data.put("assignmentId", taskLog.getMetadata().get("assignmentId").asInt());
+            } catch (Exception ignored) {}
+        }
+        // commentId metadata'da varsa notification data'ya yansıt
+        if (taskLog.getMetadata() != null && taskLog.getMetadata().has("commentId")) {
+            try {
+                data.put("commentId", taskLog.getMetadata().get("commentId").asInt());
+            } catch (Exception ignored) {}
+        }
         n.setData(data);
 
         Notification saved = notificationRepository.save(n);
         return Optional.of(saved);
+    }
+
+    // Yardımcı: assignmentId üzerinden ilgili bildirimi okunduya çek
+    public int markRelatedAsReadByAssignmentIdForUser(int userId, int assignmentId) {
+        List<Notification> list = notificationRepository.findByUserId(userId);
+        int updated = 0;
+        for (Notification n : list) {
+            if (!n.isReadFlag() && n.getData() != null && n.getData().has("assignmentId") &&
+                    n.getData().get("assignmentId").asInt() == assignmentId) {
+                n.setReadFlag(true);
+                n.setReadAt(java.time.LocalDateTime.now());
+                notificationRepository.save(n);
+                updated++;
+            }
+        }
+        return updated;
     }
 
     private NotificationType mapActionToType(TaskLog log) {

@@ -16,6 +16,7 @@ public class NotificationDto {
     private LocalDateTime createdAt;
     private Integer taskLogId;
     private Integer taskId;
+    private Integer actorId;
     private JsonNode data;
 }
 

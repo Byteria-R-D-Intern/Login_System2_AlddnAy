@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Service
 @AllArgsConstructor
@@ -30,6 +33,7 @@ public class TaskAssignmentUseCase {
     private final Logger log = LoggerFactory.getLogger(TaskAssignmentUseCase.class);
 
     // Görev atama
+    @Transactional
     public Optional<TaskAssignment> assignTask(int requesterId, String requesterRole, int taskId, int assignedToId, String message) {
         log.info("Görev atama isteği: requesterId={}, requesterRole={}, taskId={}, assignedToId={}", 
                  requesterId, requesterRole, taskId, assignedToId);
@@ -83,9 +87,19 @@ public class TaskAssignmentUseCase {
 
         TaskAssignment savedAssignment = taskAssignmentRepository.save(assignment);
         log.info("Görev başarıyla atandı! assignmentId={}", savedAssignment.getId());
-        // Log (target ile) - bildirim TaskLogUseCase içinde otomatik üretilir
-        taskLogUseCase.logActionWithTarget(task.getId(), requesterId, assignedTo.getId(), TaskLogAction.ASSIGNED,
-                "Görev " + assignedTo.getId() + " kullanıcısına atandı.");
+        // Log (target + payload)
+        ObjectMapper om = new ObjectMapper();
+        ObjectNode changes = om.createObjectNode();
+        ObjectNode assignee = om.createObjectNode();
+        assignee.put("old", (task.getCurrentAssignee() != null) ? task.getCurrentAssignee().getId() : null);
+        assignee.put("new", assignedTo.getId());
+        changes.set("assignee", assignee);
+        ObjectNode metadata = om.createObjectNode();
+        metadata.put("assignmentId", savedAssignment.getId());
+        taskLogUseCase.logActionWithTargetAndPayload(task.getId(), requesterId, assignedTo.getId(),
+                TaskLogAction.ASSIGNED,
+                "Görev " + assignedTo.getId() + " kullanıcısına atandı.",
+                changes, metadata);
         
         return Optional.of(savedAssignment);
     }
@@ -97,6 +111,7 @@ public class TaskAssignmentUseCase {
     }
 
     // Atamaya yanıt verme (kabul/red)
+    @Transactional
     public Optional<TaskAssignment> respondToAssignment(int userId, int assignmentId, AssignmentStatus response, String message) {
         log.info("Atama yanıtı: userId={}, assignmentId={}, response={}", userId, assignmentId, response);
 
@@ -135,26 +150,29 @@ public class TaskAssignmentUseCase {
 
         TaskAssignment savedAssignment = taskAssignmentRepository.save(assignment);
         log.info("Atama yanıtı kaydedildi! assignmentId={}, response={}", assignmentId, response);
-        // Log ve bildirim
-        taskLogUseCase.logAction(assignment.getTask().getId(), userId, TaskLogAction.ASSIGNMENT_RESPONDED,
-                "Yanıt: " + response + (message != null ? (" - " + message) : ""));
-        // Task sahibi ve atayan kişiye bildirim
-        User owner = assignment.getTask().getOwner();
-        if (owner != null) {
-            notificationUseCase.createNotification(owner.getId(), NotificationType.ASSIGNMENT_RESPONDED,
-                    "Atama Yanıtı", assignment.getAssignedTo().getName() + " " + assignment.getAssignedTo().getSurname() +
-                            " kişi '" + assignment.getTask().getTitle() + "' için " + response + " dedi.");
-        }
-        if (assignment.getAssignedBy() != null) {
-            notificationUseCase.createNotification(assignment.getAssignedBy().getId(), NotificationType.ASSIGNMENT_RESPONDED,
-                    "Atama Yanıtı", assignment.getAssignedTo().getName() + " " + assignment.getAssignedTo().getSurname() +
-                            " kişi '" + assignment.getTask().getTitle() + "' için " + response + " dedi.");
-        }
+        // Log ve bildirim (payload)
+        ObjectMapper om2 = new ObjectMapper();
+        ObjectNode changes2 = om2.createObjectNode();
+        ObjectNode statusNode = om2.createObjectNode();
+        statusNode.put("old", AssignmentStatus.PENDING.name());
+        statusNode.put("new", response.name());
+        changes2.set("assignmentStatus", statusNode);
+        ObjectNode metadata2 = om2.createObjectNode();
+        metadata2.put("assignmentId", assignment.getId());
+        taskLogUseCase.logActionWithPayload(assignment.getTask().getId(), userId, TaskLogAction.ASSIGNMENT_RESPONDED,
+                "Yanıt: " + response + (message != null ? (" - " + message) : ""),
+                changes2, metadata2);
+        // Yanıt bildirimi üretme: log'da tutuluyor, notification tablosuna düşürmüyoruz
         
+        // Atama bildirimi: kullanıcı yanıt verdiğinde ilgili bildirimi otomatik okundu yap
+        try {
+            notificationUseCase.markRelatedAsReadByAssignmentIdForUser(userId, assignment.getId());
+        } catch (Exception ignored) {}
         return Optional.of(savedAssignment);
     }
 
     // Atamayı iptal et (ADMIN/MANAGER veya assignedBy)
+    @Transactional
     public Optional<TaskAssignment> cancelAssignment(int requesterId, String requesterRole, int assignmentId, String reason) {
         log.info("Atama iptali: requesterId={}, requesterRole={}, assignmentId={}", requesterId, requesterRole, assignmentId);
 
@@ -222,7 +240,7 @@ public class TaskAssignmentUseCase {
         // USER sadece kendi görevlerinin atamalarını görebilir
         if (requesterRole.equals("USER")) {
             Optional<Task> taskOpt = taskRepository.findById(taskId);
-            if (taskOpt.isPresent() && taskOpt.get().getOwner().getId() != requesterId) {
+            if (taskOpt.isPresent() && (taskOpt.get().getOwner() == null || taskOpt.get().getOwner().getId() != requesterId)) {
                 log.warn("USER sadece kendi görevlerinin atamalarını görebilir!");
                 return List.of();
             }

@@ -39,6 +39,9 @@ public final class DtoMapper {
         dto.setReadFlag(n.isReadFlag());
         dto.setReadAt(n.getReadAt());
         dto.setCreatedAt(n.getCreatedAt());
+        if (n.getActor() != null) {
+            dto.setActorId(n.getActor().getId());
+        }
         if (n.getTaskLog() != null) {
             dto.setTaskLogId(n.getTaskLog().getId());
             if (n.getTaskLog().getTask() != null) {

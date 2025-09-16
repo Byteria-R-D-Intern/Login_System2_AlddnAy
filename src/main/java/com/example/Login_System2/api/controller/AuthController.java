@@ -4,6 +4,7 @@ import com.example.Login_System2.api.dto.UserResponse;
 import com.example.Login_System2.api.dto.AuthDto.LoginRequest;
 import com.example.Login_System2.api.dto.AuthDto.RegisterRequest;
 import com.example.Login_System2.application.usecase.UserUseCase;
+import com.example.Login_System2.application.usecase.UserDeletionUseCase;
 import com.example.Login_System2.domain.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +22,11 @@ import java.util.Map;
 public class AuthController {
 
     private final UserUseCase userUseCase;
+    private final UserDeletionUseCase userDeletionUseCase;
     private final Jwtutil jwtUtil;
-    public AuthController(UserUseCase userUseCase,Jwtutil jwtUtil) {
+    public AuthController(UserUseCase userUseCase, UserDeletionUseCase userDeletionUseCase, Jwtutil jwtUtil) {
         this.userUseCase = userUseCase;
+        this.userDeletionUseCase = userDeletionUseCase;
         this.jwtUtil = jwtUtil;
     }
 
@@ -123,12 +126,16 @@ public class AuthController {
         if (!"ADMIN".equals(role))
             return ResponseEntity.status(403).body("Yetkisiz erişim !!!");
 
-        boolean deleted = userUseCase.deleteUser(requesterId, role, id);
-
-        if(deleted)
-            return ResponseEntity.ok("Kullanıcı silindi.");
-        else
-            return ResponseEntity.notFound().build();
+        try {
+            boolean deleted = userDeletionUseCase.deleteUser(requesterId, role, id);
+            if (deleted) {
+                return ResponseEntity.noContent().build();
+            } else {
+                return ResponseEntity.status(404).body("Kullanıcı bulunamadı veya yetkisiz işlem.");
+            }
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
 
     }
 }

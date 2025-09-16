@@ -22,11 +22,11 @@ public class TaskLog {
     private int id;
 
     @ManyToOne
-    @JoinColumn(name = "task_id", nullable = false)
+    @JoinColumn(name = "task_id", nullable = true)
     private Task task;
 
     @ManyToOne
-    @JoinColumn(name = "actor_id", nullable = false)
+    @JoinColumn(name = "actor_id", nullable = true)
     private User actor;
 
     // Kime yapıldı (opsiyonel)

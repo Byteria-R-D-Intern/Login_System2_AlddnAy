@@ -10,6 +10,7 @@ import com.example.Login_System2.domain.model.Status;
 public interface JpaTask extends JpaRepository<Task, Integer>, TaskRepository {
 
     List<Task> findByOwnerId(int ownerId);
+    List<Task> findByCurrentAssigneeId(int userId);
     List<Task> findByStatus(Status status);
     List<Task> findByPriority(Priority priority);
     List<Task> findByTitleContaining(String title);
